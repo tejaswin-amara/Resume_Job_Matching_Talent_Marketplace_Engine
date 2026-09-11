@@ -1,55 +1,60 @@
-# Repository Improvements & Fixes
+# Comprehensive Repository Improvements & Fixes
 
-This document outlines a comprehensive list of improvements, fixes, and technical debt items that need to be addressed across the `DSA-3-PROJECT-` repository.
+This document serves as a detailed roadmap for addressing technical debt, fixing vulnerabilities, and establishing production-grade engineering standards across the `DSA-3-PROJECT-` repository.
 
-## 1. Security & Hardening
+---
 
-*   **Secrets in Source Control:** The `backend/src/main/resources/application.yml` file contains a hardcoded JWT secret (`404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970`). This must be removed from the repository, generated securely, and injected via environment variables.
-*   **Database Credentials:** Default MySQL credentials (`root`/`root`) are exposed in `docker-compose.yml` and `application.yml`. These should be replaced with strong, environment-specific passwords and should not be committed to source control.
-*   **Security Best Practices:** Ensure that CORS policies are strictly defined in the Spring Boot backend. Use strong hashing algorithms (e.g., Argon2 or BCrypt) for user passwords instead of plain text or weak hashes.
-*   **Dependencies:** Regularly scan and update frontend (`package.json`), backend (`pom.xml`), and engine (`requirements.txt`) dependencies to mitigate known vulnerabilities.
+## 1. Security & Hardening 🔒
 
-## 2. Testing & Quality Assurance
+*   **Remove Hardcoded Secrets:** The `backend/src/main/resources/application.yml` file contains a hardcoded, plaintext JWT secret (`app.jwt.secret`). This must be removed from source control immediately. Secrets must be injected via environment variables (e.g., `${JWT_SECRET}`).
+*   **Secure Database Credentials:** Default MySQL credentials (`root`/`root`) are exposed in both `docker-compose.yml` and `application.yml`. These must be changed to strong, environment-specific credentials and managed via `.env` files (which should be added to `.gitignore`).
+*   **Backend Security Configuration:** The Spring Security setup needs to be explicitly configured to define robust CORS policies, enable/disable CSRF appropriately for stateless API usage, and provide a strong `PasswordEncoder` (e.g., `BCryptPasswordEncoder` or `Argon2PasswordEncoder`).
+*   **Container Security:** Ensure Dockerfiles across all services (frontend, backend, engine) utilize non-root users, employ multi-stage builds to minimize image surface area, and scan for CVEs during the CI pipeline.
 
-*   **Missing Automated Tests:** The repository is entirely missing automated test suites across all domains (frontend, backend, engine). This is a critical gap.
-    *   **Backend (Java):** Implement JUnit tests for services, controllers, and data access layers. Integrate Mockito for mocking dependencies.
-    *   **Engine (Python):** Implement `pytest` for all core algorithms (scoring, normalization, allocation). Create dedicated test suites for the hand-built algorithms (KMP, Wagner-Fischer, etc.) against known textbook results and adversarial edge cases as specified in `docs/10-operational-considerations.md`.
-    *   **Frontend (Next.js):** Add React Testing Library and Jest for component and page testing. Add Playwright or Cypress for End-to-End (E2E) testing.
-*   **Test Coverage:** Set up a test coverage tool (e.g., JaCoCo for Java, `pytest-cov` for Python) and enforce minimum coverage thresholds in CI.
+## 2. Architecture & Infrastructure 🏗️
 
-## 3. Architecture & Infrastructure
+*   **Database Persistence:** The MySQL service in `docker-compose.yml` mounts an initialization script but lacks a named volume for `/var/lib/mysql`. Without this, all database state is lost when the container is removed or updated. Add a persistent named volume.
+*   **Database Schema Management:** The Spring Boot backend currently relies on `spring.jpa.hibernate.ddl-auto: update`. This is highly dangerous for production databases. Implement a formal schema migration tool (Flyway or Liquibase) and disable `ddl-auto`. Move `db/init.sql` into the appropriate migration folder structure.
+*   **Engine Production Readiness:** The FastAPI engine currently runs using the `uvicorn` development server directly in `docker-compose.yml` (`command: uvicorn main:app --host 0.0.0.0 --port 8000`). For a production deployment, it must use a robust ASGI process manager like Gunicorn with Uvicorn workers (`gunicorn -k uvicorn.workers.UvicornWorker`).
 
-*   **Database Persistence:** The `docker-compose.yml` mounts `./db/init.sql` but does not persist the MySQL data directory to a named volume. If the container is removed, all database data will be lost. Add a named volume for `/var/lib/mysql`.
-*   **Database Schema Management:** The backend relies on Hibernate's `ddl-auto: update`. For production systems, this is highly discouraged. Implement a schema migration tool like Flyway or Liquibase to manage database versioning systematically.
-*   **Production Readiness:** The FastAPI engine uses `uvicorn` as a development server. For production, it should use a production-grade ASGI server manager like Gunicorn with Uvicorn workers (`gunicorn -k uvicorn.workers.UvicornWorker`).
+## 3. Backend (Spring Boot / Java) ☕
 
-## 4. Backend (Spring Boot)
+*   **Replace RestTemplate:** `ApiController.java` uses `RestTemplate`, which is in maintenance mode. Migrate to the modern synchronous `RestClient` (introduced in Spring 6.1) or the reactive `WebClient`.
+*   **Strong Typing & DTOs:** The `ApiController` endpoints accept and return raw `Map<String, Object>`. This defeats the purpose of Java's static typing. Introduce dedicated Data Transfer Objects (DTOs) for all requests and responses.
+*   **Input Validation:** Implement robust input validation using `jakarta.validation` annotations (`@Valid`, `@NotNull`, `@NotBlank`, etc.) on incoming DTOs to prevent malformed data from reaching the business logic.
+*   **Global Exception Handling:** Implement a centralized `@ControllerAdvice` class to catch exceptions (e.g., `MethodArgumentNotValidException`, generic `Exception`) and return standardized RFC 7807 Problem Detail JSON responses.
+*   **Structured Logging:** Replace default console logging with structured JSON logging (e.g., via Logback JSON encoder) to facilitate ingestion by observability platforms like ELK or Datadog.
+*   **OpenAPI Documentation:** Add the `springdoc-openapi-starter-webmvc-ui` dependency to automatically generate and host Swagger documentation for the Java backend APIs.
 
-*   **Logging:** Implement structured logging (e.g., using Logback with JSON output) to improve observability, instead of relying on default console logs.
-*   **Exception Handling:** Create a centralized `@ControllerAdvice` to handle exceptions globally and return consistent, standardized error responses (e.g., following RFC 7807 Problem Details for HTTP APIs).
-*   **Input Validation:** Enforce strict validation on all incoming API payloads using `jakarta.validation` annotations (e.g., `@NotNull`, `@Size`, `@Email`).
+## 4. Engine (Python / FastAPI) 🐍
 
-## 5. Engine (Python/FastAPI)
+*   **Comprehensive Type Hinting:** Add strict static type hints (`-> dict`, `-> List[str]`, etc.) to all functions and variables in the `engine/` directory.
+*   **Static Analysis & Formatting:** Integrate `mypy` for static type checking, `black` for deterministic code formatting, `isort` for import sorting, and `ruff` or `flake8` for linting. Add these to `requirements.txt`.
+*   **State Management:** `main.py` utilizes in-memory dictionaries and models (`AliasTrie`, `OntologyEmbeddings`). This will not scale horizontally across multiple worker processes. Consider moving shared state to an external store like Redis or initializing models efficiently on worker startup.
 
-*   **Type Hinting & Static Analysis:** Ensure full and accurate Python type hinting across the entire engine codebase. Introduce `mypy` to enforce static type checking.
-*   **Code Formatting & Linting:** Standardize code style using `black`, `isort`, and `flake8` or `ruff`. Enforce these checks in the CI pipeline.
+## 5. Frontend (Next.js / React) ⚛️
 
-## 6. Frontend (Next.js/React)
+*   **Linting & Code Style:** The frontend lacks a configured linter. Install and configure `eslint` (with Next.js core web vitals) and `prettier` to enforce code consistency.
+*   **Error Boundaries:** The Next.js App Router does not currently have robust error handling. Implement `error.js` / `global-error.js` boundaries to catch render errors gracefully and prevent white screens of death.
+*   **State Management Strategy:** As the UI scales, define a clear state management approach (e.g., React Context for global theme/auth, Zustand or Redux for complex domain state) to avoid prop-drilling.
 
-*   **Linting and Formatting:** Integrate ESLint and Prettier, and configure a strict ruleset. Ensure code formatting is consistent across the frontend.
-*   **State Management:** As the application grows, ensure a scalable state management strategy is in place (e.g., React Context, Zustand, or Redux) if prop drilling becomes an issue.
-*   **Error Boundaries:** Implement React Error Boundaries to gracefully handle UI crashes and prevent the entire application from unmounting.
+## 6. Testing & Quality Assurance 🧪
 
-## 7. CI/CD & Automation
+*   **Address Complete Lack of Tests:** The entire repository has **zero** automated tests. This is a critical risk.
+    *   **Backend (Java):** Write unit tests for controllers and services using JUnit 5 and Mockito. Implement integration tests using `@SpringBootTest` and Testcontainers for the database.
+    *   **Engine (Python):** Add `pytest` to `requirements.txt`. Write exhaustive unit tests for the core, hand-built algorithms (KMP, Wagner-Fischer, bipartite matching, set cover) using known edge cases.
+    *   **Frontend (Next.js):** Integrate Jest and React Testing Library for component unit tests. Add Playwright or Cypress for end-to-end (E2E) testing of critical user journeys.
+*   **Code Coverage:** Enforce code coverage thresholds using JaCoCo (Java) and `pytest-cov` (Python). Fail the CI build if coverage drops below the defined threshold (e.g., 80%).
 
-*   **Pre-commit Hooks:** Introduce `pre-commit` to the repository to automate linting, formatting, and secret scanning (e.g., `trufflehog` or `detect-secrets`) locally before commits are allowed.
-*   **GitHub Actions Expansion:** The current `.github/workflows/docs-check.yml` only checks documentation. Expand GitHub Actions to include:
-    *   Linting and formatting checks for Python, Java, and TypeScript/JavaScript.
-    *   Running all automated tests (unit and integration).
-    *   Building Docker images to ensure the build process succeeds.
-*   **Git Hooks TODOs:** There are lingering `TODO` comments in `.git/hooks/sendemail-validate.sample`. If this hook is actively used, implement the appropriate validation logic; otherwise, ignore or remove it.
+## 7. CI/CD & Automation ⚙️
 
-## 8. Documentation
+*   **Expand GitHub Actions:** The current `.github/workflows/docs-check.yml` only validates markdown links. Create a robust CI pipeline (`ci.yml`) that triggers on PRs to:
+    *   Run frontend, backend, and engine linting/formatting checks.
+    *   Execute all automated tests across all three codebases.
+    *   Build Docker images to verify compilation and dependency resolution succeed.
+*   **Pre-Commit Hooks:** Add a `.pre-commit-config.yaml` file to enforce code formatting (`black`, `isort`, `prettier`) and basic security scanning (e.g., `detect-secrets`) locally before developers can push commits.
+*   **Clean Up Git Hooks:** Review and resolve the `TODO` placeholders in `.git/hooks/sendemail-validate.sample`, or remove the sample file if email patch validation is not part of the team's workflow.
 
-*   **Swagger/OpenAPI:** The API documentation in `docs/07-api-and-service-contracts.md` mentions a "full OpenAPI/Swagger spec should be generated from code." Ensure that `springdoc-openapi` is integrated into the backend and FastAPI's native Swagger UI is exposed for the engine.
-*   **Run Instructions:** Add explicit commands in the `README.md` on how to start the full stack using `docker-compose up`, as this is currently implied but not explicitly stated.
+## 8. Documentation 📚
+
+*   **Onboarding / Startup Guide:** While the documentation is extensive regarding algorithms and system design, the `README.md` lacks explicit, step-by-step instructions for a new developer to start the application (e.g., `docker-compose up --build`). Update the README to include a "Quick Start" section.
