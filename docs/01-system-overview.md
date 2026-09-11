@@ -28,46 +28,106 @@
 
 ### 1.4 High-Level Architecture
 
-```
-                                ┌─────────────────────────┐
-                                │      Client Layer        │
-                                │ (Web/App/Recruiter UI)   │
-                                └────────────┬─────────────┘
-                                             │ REST/GraphQL (Section 7)
-                                ┌────────────▼─────────────┐
-                                │       API Gateway         │
-                                │ AuthN/AuthZ, rate limit,  │
-                                │ request routing           │
-                                └────────────┬─────────────┘
-             ┌───────────────────────────────┼───────────────────────────────┐
-             │                               │                               │
-   ┌─────────▼─────────┐         ┌───────────▼───────────┐        ┌─────────▼─────────┐
-   │  Ingestion Service │         │   Matching/Scoring     │        │ Allocation/Optim.  │
-   │  (résumé & JD       │         │   Service               │        │ Service (bipartite │
-   │   parsing, ETL)     │         │   (ranking API)         │        │ matching / flow)   │
-   └─────────┬─────────┘         └───────────┬───────────┘        └─────────┬─────────┘
-             │                               │                               │
-   ┌─────────▼─────────────────────────────────────────────────────────────▼─────────┐
-   │                          Core Data & Index Layer                                 │
-   │  - Résumé Store (document DB)      - Job Store (document DB)                     │
-   │  - Skill Ontology Graph (graph DB) - Inverted Index (hand-built)                  │
-   │  - Embedding Index (ANN, hand-built or vetted lib per Sec 6.5)                    │
-   │  - Feature Store (scoring features, versioned)                                    │
-   └─────────┬─────────────────────────────────────────────────────────────┬─────────┘
-             │                                                             │
-   ┌─────────▼─────────┐                                         ┌─────────▼─────────┐
-   │  Batch Pipeline    │                                         │  Streaming Pipeline │
-   │  (nightly ETL,     │                                         │  (near-real-time    │
-   │   re-embedding,    │                                         │   new-posting /     │
-   │   dedup)           │                                         │   new-résumé index) │
-   └────────────────────┘                                         └────────────────────┘
-             │
-   ┌─────────▼─────────┐
-   │ Observability      │
-   │ (logs/metrics/trace│
-   │  + fairness audit) │
-   └────────────────────┘
-```
+flowchart TD
+    %% Styling and Classes
+    classDef client fill:#E1F5FE,stroke:#0288D1,stroke-width:2px,color:#01579B;
+    classDef gateway fill:#EDE7F6,stroke:#7E57C2,stroke-width:2px,color:#4527A0;
+    classDef service fill:#E8F5E9,stroke:#43A047,stroke-width:2px,color:#1B5E20;
+    classDef data fill:#FFF3E0,stroke:#FB8C00,stroke-width:2px,color:#E65100;
+    classDef pipeline fill:#FCE4EC,stroke:#D81B60,stroke-width:2px,color:#880E4F;
+    classDef obs fill:#ECEFF1,stroke:#607D8B,stroke-width:2px,color:#263238;
+
+    %% Client Layer
+    subgraph Client_Layer ["Client Layer"]
+        UI_Candidate["Candidate Web / Mobile UI"]
+        UI_Recruiter["Recruiter / Admin Portal"]
+    end
+    class UI_Candidate,UI_Recruiter client;
+
+    %% API Gateway Layer
+    subgraph Gateway_Layer ["API Gateway & Security Layer"]
+        Gateway["API Gateway / Envoy / Kong<br/>(AuthN / AuthZ / Rate Limiting / WAF)"]
+    end
+    class Gateway gateway;
+
+    %% Application Microservices Layer
+    subgraph Core_Services ["Core Application Services Layer"]
+        Ingestion_Svc["Ingestion Service<br/>(Parsing, Normalization & ETL)"]
+        Matching_Svc["Matching & Scoring Service<br/>(Hybrid Lexical, Semantic & GNN Scoring)"]
+        Allocation_Svc["Allocation & Optimization Service<br/>(Bipartite Matching, MCMF & Interview Flow)"]
+    end
+    class Ingestion_Svc,Matching_Svc,Allocation_Svc service;
+
+    %% Data & Index Storage Layer
+    subgraph Storage_Layer ["Core Data & Index Layer"]
+        direction TB
+        subgraph Doc_Stores ["Document & Relational Stores"]
+            Doc_Resume[("Résumé Store<br/>(Document DB / S3 Vault)")]
+            Doc_Job[("Job Store<br/>(PostgreSQL / MongoDB)")]
+        end
+        subgraph Search_Indexes ["Indexing Systems"]
+            Inverted_Index[("Hand-Built Inverted Index<br/>(BM25 / Boolean Postings)")]
+            Vector_Index[("Embedding Index<br/>(HNSW / ScaNN / FAISS)")]
+            Ontology_Graph[("Skill Ontology Graph<br/>(Neo4j / Property Graph)")]
+        end
+        Feature_Store[("Feature Store<br/>(Redis / Versioned Feature DB)")]
+    end
+    class Doc_Resume,Doc_Job,Inverted_Index,Vector_Index,Ontology_Graph,Feature_Store data;
+
+    %% Data Processing Pipelines
+    subgraph Processing_Layer ["Data Processing Pipelines"]
+        Streaming_Pipe["Streaming Pipeline<br/>(Kafka / Flink / CDC Event-Driven Reindexing)"]
+        Batch_Pipe["Batch Pipeline<br/>(Nightly ETL, Deduplication, Model Re-Embedding)"]
+    end
+    class Streaming_Pipe,Batch_Pipe pipeline;
+
+    %% Cross-Cutting Observability & Compliance
+    subgraph Observability_Layer ["Cross-Cutting Observability & Governance"]
+        Audit_Fairness["Fairness & Bias Audit Engine<br/>(Four-Fifths Rule, Disparate Impact Monitoring)"]
+        Telemetry["Telemetry Platform<br/>(Prometheus, Grafana, OpenTelemetry Traces, Loki)"]
+    end
+    class Audit_Fairness,Telemetry obs;
+
+    %% Client to Gateway
+    UI_Candidate -->|REST / GraphQL| Gateway
+    UI_Recruiter -->|REST / GraphQL| Gateway
+
+    %% Gateway to Microservices
+    Gateway -->|Résumé & Job Uploads| Ingestion_Svc
+    Gateway -->|Search & Ranking Queries| Matching_Svc
+    Gateway -->|Schedule & Slot Allocation| Allocation_Svc
+
+    %% Ingestion Pipeline Flow
+    Ingestion_Svc -->|Persist Parsed Raw Documents| Doc_Resume
+    Ingestion_Svc -->|Persist Job Postings| Doc_Job
+    Ingestion_Svc -->|Publish Ingestion Events| Streaming_Pipe
+
+    %% Streaming & Batch Updates to Storage
+    Streaming_Pipe -->|Update Near-Real-Time Postings| Inverted_Index
+    Streaming_Pipe -->|Incremental Embeddings| Vector_Index
+    Batch_Pipe -->|Full Model Sync & Embeddings| Vector_Index
+    Batch_Pipe -->|Taxonomy Enrichment| Ontology_Graph
+    Batch_Pipe -->|Extract Candidate & Job Signals| Feature_Store
+    Doc_Resume -.->|Raw Reads| Batch_Pipe
+    Doc_Job -.->|Raw Reads| Batch_Pipe
+
+    %% Matching Service Retrievals
+    Matching_Svc -->|1. Candidate Fast Filtering| Inverted_Index
+    Matching_Svc -->|2. Dense Semantic Search| Vector_Index
+    Matching_Svc -->|3. Skill Traversal & Synonyms| Ontology_Graph
+    Matching_Svc -->|4. Feature Enrichment| Feature_Store
+    Matching_Svc -->|Feed Qualified Shortlist| Allocation_Svc
+
+    %% Allocation Execution
+    Allocation_Svc -->|Read Candidate Data| Doc_Resume
+    Allocation_Svc -->|Read Capacity & Deadlines| Doc_Job
+
+    %% Observability & Governance Hooks
+    Matching_Svc -.->|Audit Scores & Outputs| Audit_Fairness
+    Allocation_Svc -.->|Audit Matching Allocations| Audit_Fairness
+    Ingestion_Svc -.->|Metrics & Distributed Traces| Telemetry
+    Matching_Svc -.->|Metrics & Distributed Traces| Telemetry
+    Allocation_Svc -.->|Metrics & Distributed Traces| Telemetry
 
 ### 1.5 Module List
 
