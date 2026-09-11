@@ -20,7 +20,7 @@ is hand-built from first principles, no `java.util.*`-equivalent standard librar
 
 ## 📌 What this is
 
-A full engineering documentation package for a **résumé ↔ job matching and talent-allocation platform**,
+A full engineering documentation package for a **resume ↔ job matching and talent-allocation platform**,
 built as the semester project for **Data Structures and Algorithms – 3 (25CS2103E)** at KLBCH.
 
 The system takes millions of résumés and job postings and answers three hard questions well:
