@@ -27,7 +27,8 @@
 - Coverage: % of postings that receive at least K qualified candidates within N hours of posting.
 
 ### 1.4 High-Level Architecture
-'''
+
+```mermaid
 flowchart TD
     %% Styling and Classes
     classDef client fill:#E1F5FE,stroke:#0288D1,stroke-width:2px,color:#01579B;
@@ -128,7 +129,6 @@ flowchart TD
     Ingestion_Svc -.->|Metrics & Distributed Traces| Telemetry
     Matching_Svc -.->|Metrics & Distributed Traces| Telemetry
     Allocation_Svc -.->|Metrics & Distributed Traces| Telemetry
-'''
 
 ### 1.5 Module List
 
