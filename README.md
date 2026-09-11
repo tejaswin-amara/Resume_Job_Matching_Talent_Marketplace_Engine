@@ -72,19 +72,31 @@ It is written to be picked up directly by a developer (or an AI coding agent) an
 
 ## 🏗️ Architecture at a Glance
 
-```
-Client Layer  →  API Gateway  →   ┌─ Ingestion Service
-                                  ├─ Matching / Scoring Service
-                                  └─ Allocation / Optimization Service
-                                          │
-                          Core Data & Index Layer
-              (Résumé Store · Job Store · Skill Ontology Graph ·
-               Inverted Index · Embedding Index · Feature Store)
-                                          │
-                     Batch Pipeline   +   Streaming Pipeline
-                                          │
-                                   Observability
-                     (logs · metrics · tracing · fairness audit)
+```mermaid
+flowchart TD
+    classDef client fill:#E1F5FE,stroke:#0288D1,stroke-width:2px,color:#01579B;
+    classDef gateway fill:#EDE7F6,stroke:#7E57C2,stroke-width:2px,color:#4527A0;
+    classDef service fill:#E8F5E9,stroke:#43A047,stroke-width:2px,color:#1B5E20;
+    classDef data fill:#FFF3E0,stroke:#FB8C00,stroke-width:2px,color:#E65100;
+    
+    UI_Client["Client Layer (Web/App UI)"]:::client
+    Gateway["API Gateway (Auth / Rate Limiting)"]:::gateway
+    
+    subgraph Core_Services ["Core Microservices"]
+        Ingestion_Svc["Ingestion & ETL Service"]:::service
+        Matching_Svc["Matching & Scoring Service"]:::service
+        Allocation_Svc["Allocation & Optimization Service"]:::service
+    end
+    
+    subgraph Storage_Layer ["Core Data & Index Layer"]
+        Docs[("Résumé & Job Stores")]:::data
+        Indexes[("Inverted & Vector Indexes")]:::data
+        Graph[("Skill Ontology Graph")]:::data
+    end
+    
+    UI_Client --> Gateway
+    Gateway --> Ingestion_Svc & Matching_Svc & Allocation_Svc
+    Core_Services --> Storage_Layer
 ```
 
 Full diagram and module responsibilities → [`docs/01-system-overview.md`](docs/01-system-overview.md)
