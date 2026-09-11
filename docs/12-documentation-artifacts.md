@@ -8,7 +8,7 @@ See Section 7 for the endpoint contracts; a full OpenAPI/Swagger spec should be 
 
 | Field | Type | Description | PII? |
 |---|---|---|---|
-| `resume_id` | UUID | Internal résumé identifier | No |
+| `resume_id` | UUID | Internal resume identifier | No |
 | `candidate_id` | UUID | Internal candidate identifier | No |
 | `contact.email_hash` | string | Salted hash of email | Sensitive (hashed) |
 | `skills[].canonical_skill_id` | string | Ontology-normalized skill ID | No |
@@ -30,7 +30,7 @@ See Section 7 for the endpoint contracts; a full OpenAPI/Swagger spec should be 
 ### 12.4 User Guides (outline)
 
 - **Recruiter Quick Start**: post a job → view ranked matches → read match explanations → shortlist/reject → (optional) run team allocation.
-- **Candidate Quick Start**: upload résumé → review parsed/normalized skills → set availability/consent → view job matches.
+- **Candidate Quick Start**: upload resume → review parsed/normalized skills → set availability/consent → view job matches.
 - **Admin Guide**: curate the skill ontology (merge aliases, add nodes), review the fairness dashboard, manage consent/retention exceptions.
 
 ### 12.5 Developer Onboarding Notes

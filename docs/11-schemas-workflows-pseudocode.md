@@ -1,6 +1,6 @@
 ## 11. Example Data Schemas, Workflows, and Pseudo-code
 
-### 11.1 Sample Résumé (abbreviated)
+### 11.1 Sample Resume (abbreviated)
 
 ```json
 {

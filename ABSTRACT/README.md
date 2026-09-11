@@ -1,6 +1,6 @@
 # Project Abstract
 
-**Résumé–Job Matching & Talent-Marketplace Engine**
+**Resume–Job Matching & Talent-Marketplace Engine**
 Project report submitted for partial fulfilment of grade for **Data Structures and Algorithms – 3 (25CS2103E)**, A.Y. 2026-2027.
 
 📄 Full submitted abstract: **[`DSA-3 Project Abstract.pdf`](<DSA-3 Project Abstract.pdf>)**
@@ -21,7 +21,7 @@ Project report submitted for partial fulfilment of grade for **Data Structures a
 
 ## Summary
 
-This project presents the design and implementation of a Résumé–Job Matching and Talent-Marketplace Engine aimed at optimizing the recruitment pipeline. Modern hiring platforms must match large pools of résumés against job postings, normalize inconsistent skill vocabularies, assign candidates to roles optimally, and assemble minimal skill sets to staff teams.
+This project presents the design and implementation of a Resume–Job Matching and Talent-Marketplace Engine aimed at optimizing the recruitment pipeline. Modern hiring platforms must match large pools of resumes against job postings, normalize inconsistent skill vocabularies, assign candidates to roles optimally, and assemble minimal skill sets to staff teams.
 
 To address this, the engine ingests and indexes textual data, using advanced string algorithms to parse and score candidate-to-job fit. It employs network-flow algorithms — bipartite matching — to compute the optimal assignment of candidates to available roles, maximizing placement efficiency. Finally, it applies approximation techniques to solve the NP-hard problem of determining the minimum skill set required to staff a given team.
 

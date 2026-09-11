@@ -3,7 +3,7 @@
 ### 2.1 Core Schemas
 
 ```jsonc
-// Résumé (canonical, post-parsing)
+// Resume (canonical, post-parsing)
 Resume {
   resume_id: UUID,
   candidate_id: UUID,
@@ -94,15 +94,15 @@ Modeled as a **DAG** (a skill can specialize more than one parent — e.g., "PyS
 
 | Index | Purpose | Structure |
 |---|---|---|
-| Inverted index (skills → résumé IDs) | Fast candidate retrieval for a required-skill set (Boolean/ranked retrieval) | Hand-built postings lists, sorted by `resume_id`, skip pointers for fast intersection (same design as classic IR inverted indexes; must be hand-built per engine constraint) |
-| Inverted index (n-gram/shingle → résumé IDs) | Free-text / fuzzy title & company search | Rolling-hash (Rabin–Karp style) shingling, same postings-list structure |
-| Trie (skill alias dictionary) | O(len) exact + prefix skill lookup, autocomplete | Hand-built trie, Aho-Corasick automaton for multi-skill extraction from résumé free text in one pass |
-| Embedding ANN index | Semantic résumé↔job similarity, fuzzy skill fallback | HNSW-style graph index (approximate) — see Sec.6.5 for the "hand-built vs. vetted-library" boundary decision |
+| Inverted index (skills → resume IDs) | Fast candidate retrieval for a required-skill set (Boolean/ranked retrieval) | Hand-built postings lists, sorted by `resume_id`, skip pointers for fast intersection (same design as classic IR inverted indexes; must be hand-built per engine constraint) |
+| Inverted index (n-gram/shingle → resume IDs) | Free-text / fuzzy title & company search | Rolling-hash (Rabin–Karp style) shingling, same postings-list structure |
+| Trie (skill alias dictionary) | O(len) exact + prefix skill lookup, autocomplete | Hand-built trie, Aho-Corasick automaton for multi-skill extraction from resume free text in one pass |
+| Embedding ANN index | Semantic resume↔job similarity, fuzzy skill fallback | HNSW-style graph index (approximate) — see Sec.6.5 for the "hand-built vs. vetted-library" boundary decision |
 | Ranking signal store | Precomputed features feeding the scorer (recency, popularity, historical acceptance rate) | Columnar feature store, updated batch + streaming |
 
 **Ranking signals used at retrieval time** (before the full scorer runs — this is a cheap first-pass filter/rank to shrink the candidate set from millions to a few thousand before the expensive scoring model runs):
 - BM25-style term frequency / inverse document frequency over the skill inverted index.
-- Recency of résumé update.
+- Recency of resume update.
 - Location/remote compatibility (hard filter).
 - Work-authorization compatibility (hard filter).
 

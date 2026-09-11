@@ -1,4 +1,4 @@
-# Résumé–Job Matching & Talent-Marketplace Engine
+# Resume–Job Matching & Talent-Marketplace Engine
 ## Full Engineering Documentation Package (single-file view)
 
 > Auto-generated from `docs/*.md` by `scripts/build_full_documentation.py`.
@@ -21,7 +21,7 @@
 
 ### 1.2 Stakeholders
 
-* **Candidates** — submit résumés, consent to processing, receive match explanations.
+* **Candidates** — submit resumes, consent to processing, receive match explanations.
 * **Employers / Hiring Managers** — post jobs, define team-composition constraints, receive ranked shortlists.
 * **Talent-Ops / Marketplace Admins** — manage the skill ontology, run allocation batches, monitor fairness dashboards.
 * **Compliance/Legal** — audit scoring decisions, enforce retention and consent policy.
@@ -71,7 +71,7 @@ flowchart TD
     subgraph Storage_Layer ["Core Data & Index Layer"]
         direction TB
         subgraph Doc_Stores ["Document & Relational Stores"]
-            Doc_Resume[("Résumé Store<br/>(Document DB / S3 Vault)")]
+            Doc_Resume[("Resume Store<br/>(Document DB / S3 Vault)")]
             Doc_Job[("Job Store<br/>(PostgreSQL / MongoDB)")]
         end
         subgraph Search_Indexes ["Indexing Systems"]
@@ -102,7 +102,7 @@ flowchart TD
     UI_Recruiter -->|REST / GraphQL| Gateway
 
     %% Gateway to Microservices
-    Gateway -->|Résumé & Job Uploads| Ingestion_Svc
+    Gateway -->|Resume & Job Uploads| Ingestion_Svc
     Gateway -->|Search & Ranking Queries| Matching_Svc
     Gateway -->|Schedule & Slot Allocation| Allocation_Svc
 
@@ -143,7 +143,7 @@ flowchart TD
 
 | Module | Responsibility | Primary algorithms (Sec.) |
 |---|---|---|
-| Ingestion Service | Parse résumé/JD text (PDF/DOCX/plain), extract structured fields, enrich | String matching (KMP/Z), DP edit-distance for field normalization |
+| Ingestion Service | Parse resume/JD text (PDF/DOCX/plain), extract structured fields, enrich | String matching (KMP/Z), DP edit-distance for field normalization |
 | Skill Normalizer | Map raw skill tokens → canonical ontology nodes | Trie + Aho-Corasick, edit-distance fuzzy match, embedding fallback |
 | Indexer | Build inverted index + embedding index | Hand-built inverted index, hashing (rolling hash for shingles) |
 | Matching/Scoring Service | Compute candidate↔job fit score | Weighted feature model, DP for skill-set alignment, cosine sim |
@@ -160,7 +160,7 @@ flowchart TD
 ### 2.1 Core Schemas
 
 ```jsonc
-// Résumé (canonical, post-parsing)
+// Resume (canonical, post-parsing)
 Resume {
   resume_id: UUID,
   candidate_id: UUID,
@@ -251,15 +251,15 @@ Modeled as a **DAG** (a skill can specialize more than one parent — e.g., "PyS
 
 | Index | Purpose | Structure |
 |---|---|---|
-| Inverted index (skills → résumé IDs) | Fast candidate retrieval for a required-skill set (Boolean/ranked retrieval) | Hand-built postings lists, sorted by `resume_id`, skip pointers for fast intersection (same design as classic IR inverted indexes; must be hand-built per engine constraint) |
-| Inverted index (n-gram/shingle → résumé IDs) | Free-text / fuzzy title & company search | Rolling-hash (Rabin–Karp style) shingling, same postings-list structure |
-| Trie (skill alias dictionary) | O(len) exact + prefix skill lookup, autocomplete | Hand-built trie, Aho-Corasick automaton for multi-skill extraction from résumé free text in one pass |
-| Embedding ANN index | Semantic résumé↔job similarity, fuzzy skill fallback | HNSW-style graph index (approximate) — see Sec.6.5 for the "hand-built vs. vetted-library" boundary decision |
+| Inverted index (skills → resume IDs) | Fast candidate retrieval for a required-skill set (Boolean/ranked retrieval) | Hand-built postings lists, sorted by `resume_id`, skip pointers for fast intersection (same design as classic IR inverted indexes; must be hand-built per engine constraint) |
+| Inverted index (n-gram/shingle → resume IDs) | Free-text / fuzzy title & company search | Rolling-hash (Rabin–Karp style) shingling, same postings-list structure |
+| Trie (skill alias dictionary) | O(len) exact + prefix skill lookup, autocomplete | Hand-built trie, Aho-Corasick automaton for multi-skill extraction from resume free text in one pass |
+| Embedding ANN index | Semantic resume↔job similarity, fuzzy skill fallback | HNSW-style graph index (approximate) — see Sec.6.5 for the "hand-built vs. vetted-library" boundary decision |
 | Ranking signal store | Precomputed features feeding the scorer (recency, popularity, historical acceptance rate) | Columnar feature store, updated batch + streaming |
 
 **Ranking signals used at retrieval time** (before the full scorer runs — this is a cheap first-pass filter/rank to shrink the candidate set from millions to a few thousand before the expensive scoring model runs):
 - BM25-style term frequency / inverse document frequency over the skill inverted index.
-- Recency of résumé update.
+- Recency of resume update.
 - Location/remote compatibility (hard filter).
 - Work-authorization compatibility (hard filter).
 
@@ -273,7 +273,7 @@ Modeled as a **DAG** (a skill can specialize more than one parent — e.g., "PyS
 
 Two-stage architecture:
 
-**Stage A — Retrieval (cheap, high-recall).** Inverted-index Boolean/BM25 retrieval + hard-constraint filtering (location, work-auth, hard-required skills) narrows millions of résumés to a top-N (e.g., N=2,000) candidate set per job in milliseconds.
+**Stage A — Retrieval (cheap, high-recall).** Inverted-index Boolean/BM25 retrieval + hard-constraint filtering (location, work-auth, hard-required skills) narrows millions of resumes to a top-N (e.g., N=2,000) candidate set per job in milliseconds.
 
 **Stage B — Scoring (expensive, high-precision).** A weighted, feature-based, linear-in-features model (chosen for **explainability** over a black-box net, per the fairness/audit requirement) computes a final score:
 
@@ -290,14 +290,14 @@ score(candidate, job) = Σ_i  w_i · f_i(candidate, job)
 | `seniority_alignment` | penalty for over/under-qualification vs. `seniority_level` | 0.10 |
 | `location_fit` | remote/geo compatibility score (0 if hard fail, already filtered) | 0.05 |
 | `historical_acceptance_signal` | learned prior: how often similar candidate→job matches converted to interviews | 0.10 |
-| `recency` | freshness of résumé data | 0.05 |
+| `recency` | freshness of resume data | 0.05 |
 
 Weights are **calibrated**, not hand-guessed at production time: fit via logistic regression / gradient boosting on historical (candidate, job, employer_interview_decision) labels, then the *learned* weights are frozen into the linear explainable model above (distillation of a possibly-nonlinear model into an explainable linear one is preferred to shipping the nonlinear model directly, to preserve the auditability requirement in Sec.8). Recalibrate on a monthly cadence or when feature drift exceeds a threshold (Sec.10).
 
 ### 3.2 Handling Synonyms, Expansion, and Hierarchies in Scoring
 
-- **Synonym expansion at query time**: a job requiring `skill:react_js` is expanded, before retrieval, to the alias set `{react, reactjs, react.js, react_native? (configurable)}` via the ontology, so the inverted-index lookup doesn't miss résumés that used a different literal string.
-- **Hierarchy-aware partial credit**: `hard_skill_coverage` is not binary per skill — a candidate with a **child** of the required skill gets full credit; a candidate with the **direct parent** gets partial credit (configurable, e.g. 0.6); a **sibling** gets smaller partial credit (e.g. 0.3); unrelated gets 0. This is implemented as a shortest-path lookup on the ontology DAG at scoring time (precomputed distance table refreshed on ontology updates, since the DAG changes far less often than résumés).
+- **Synonym expansion at query time**: a job requiring `skill:react_js` is expanded, before retrieval, to the alias set `{react, reactjs, react.js, react_native? (configurable)}` via the ontology, so the inverted-index lookup doesn't miss resumes that used a different literal string.
+- **Hierarchy-aware partial credit**: `hard_skill_coverage` is not binary per skill — a candidate with a **child** of the required skill gets full credit; a candidate with the **direct parent** gets partial credit (configurable, e.g. 0.6); a **sibling** gets smaller partial credit (e.g. 0.3); unrelated gets 0. This is implemented as a shortest-path lookup on the ontology DAG at scoring time (precomputed distance table refreshed on ontology updates, since the DAG changes far less often than resumes).
 
 ### 3.3 Fairness and Bias Considerations
 
@@ -381,7 +381,7 @@ This is exactly the classic **Set Cover** problem (NP-hard — Module-5 of the c
 
 ### 6.1 Ingestion
 
-Sources: uploaded résumé files (PDF/DOCX/text), employer-submitted job postings (structured form + free text), third-party feeds (optional, via connector).
+Sources: uploaded resume files (PDF/DOCX/text), employer-submitted job postings (structured form + free text), third-party feeds (optional, via connector).
 
 Pipeline stages: `raw upload → text extraction → language detection → field extraction (NER-style: name/contact/skills/dates) → skill normalization (Sec.2.2) → embedding generation → dedup (6.3) → index write (6.4/6.5) → ready-for-query`.
 
@@ -394,20 +394,20 @@ Pipeline stages: `raw upload → text extraction → language detection → fiel
 ### 6.3 Deduplication
 
 - **Exact dedup**: content hash (e.g., SHA-256 of normalized text) catches identical re-uploads.
-- **Near-dup detection**: MinHash / shingling over the résumé's normalized skill-and-experience text, with a rolling hash (Rabin–Karp construction) for shingle generation and a locality-sensitive-hashing (LSH) bucket structure to avoid O(n²) pairwise comparison at millions-of-records scale — group into LSH buckets, only compare within-bucket pairs, merge/flag near-duplicate profiles (e.g., same candidate re-applying with a slightly edited résumé) above a similarity threshold.
+- **Near-dup detection**: MinHash / shingling over the resume's normalized skill-and-experience text, with a rolling hash (Rabin–Karp construction) for shingle generation and a locality-sensitive-hashing (LSH) bucket structure to avoid O(n²) pairwise comparison at millions-of-records scale — group into LSH buckets, only compare within-bucket pairs, merge/flag near-duplicate profiles (e.g., same candidate re-applying with a slightly edited resume) above a similarity threshold.
 
 ### 6.4 Real-time vs. Batch
 
 | Path | Trigger | Latency target | Work done |
 |---|---|---|---|
-| Streaming (near-real-time) | New résumé upload / new job posted | < 5 min to be queryable | Parse → normalize → embed → incremental index insert (append-only postings-list update; no full rebuild) |
+| Streaming (near-real-time) | New resume upload / new job posted | < 5 min to be queryable | Parse → normalize → embed → incremental index insert (append-only postings-list update; no full rebuild) |
 | Batch (nightly / hourly) | Scheduled | Complete by next business day | Re-embedding after model updates, ontology-propagation table rebuild, dedup sweep, full index compaction/rebalancing, allocation-optimization batch run (Sec.4) for scheduled hiring cycles |
 
 ### 6.5 Caching, Sharding, Replication
 
-- **Caching**: hot-job-posting → top-candidate-list results cached with a short TTL (minutes), invalidated on new-résumé-ingest events affecting that job's skill set (via a skill→job reverse index so we only invalidate affected caches, not everything).
-- **Sharding**: inverted index and embedding index sharded by a **skill-hash range** (so a query for a given required-skill set touches a bounded number of shards) with a **résumé-ID hash** secondary sharding for the raw document store, replicated across ≥3 nodes for availability.
-- **Replication**: read replicas for the query-serving path (scoring/retrieval is read-heavy); writes go through a single-leader path per shard with async replication to read replicas, acceptable given eventual consistency is fine for "résumé searchable within 5 minutes" (Sec 6.4).
+- **Caching**: hot-job-posting → top-candidate-list results cached with a short TTL (minutes), invalidated on new-resume-ingest events affecting that job's skill set (via a skill→job reverse index so we only invalidate affected caches, not everything).
+- **Sharding**: inverted index and embedding index sharded by a **skill-hash range** (so a query for a given required-skill set touches a bounded number of shards) with a **resume-ID hash** secondary sharding for the raw document store, replicated across ≥3 nodes for availability.
+- **Replication**: read replicas for the query-serving path (scoring/retrieval is read-heavy); writes go through a single-leader path per shard with async replication to read replicas, acceptable given eventual consistency is fine for "resume searchable within 5 minutes" (Sec 6.4).
 - **Hand-built vs. vetted-library boundary**: per the course constraint, the *core algorithmic engine* (inverted index construction/query, string matching, DP, flow, set-cover, hashing) must be hand-built with no `java.util.*`-equivalent standard collections. Infrastructure-layer concerns that are not the pedagogical target of the course — the underlying key-value storage engine, network/replication protocol, TLS — are appropriately delegated to vetted infrastructure (a document/graph DB, a message queue), matching the course's own framing ("java.util.* forbidden **inside the engine**" — i.e., the algorithmic core, not the surrounding platform).
 
 ---
@@ -419,8 +419,8 @@ Pipeline stages: `raw upload → text extraction → language detection → fiel
 ### 7.1 Core Endpoints
 
 ```
-POST   /v1/resumes                     — upload/create a résumé (multipart or JSON)
-GET    /v1/resumes/{resume_id}         — fetch parsed résumé (access-controlled)
+POST   /v1/resumes                     — upload/create a resume (multipart or JSON)
+GET    /v1/resumes/{resume_id}         — fetch parsed resume (access-controlled)
 POST   /v1/jobs                        — create a job posting
 GET    /v1/jobs/{job_id}               — fetch a job posting
 GET    /v1/jobs/{job_id}/matches       — ranked candidate matches for a job (Sec.3)
@@ -464,7 +464,7 @@ Response 200:
 ### 7.3 Authentication & Rate Limits
 
 - **AuthN**: OAuth2 / signed JWT per caller (candidate, employer, admin service account); mTLS between internal services.
-- **AuthZ**: role-based — candidates can only read/write their own résumé; employers can only read matches for their own postings and never see another employer's raw candidate pool directly (only ranked results for their job); admins have ontology-curation and audit-log access.
+- **AuthZ**: role-based — candidates can only read/write their own resume; employers can only read matches for their own postings and never see another employer's raw candidate pool directly (only ranked results for their job); admins have ontology-curation and audit-log access.
 - **Rate limits**: per-API-key token bucket, e.g. 100 req/min for `/matches` endpoints, 10 req/min for `/allocations/run` (expensive batch op — also queued, not synchronous, above a size threshold).
 
 ### 7.4 Observability
@@ -481,7 +481,7 @@ Response 200:
 
 ### 8.1 Data Retention
 
-- Résumé PII retained only as long as the candidate's consent window (default configurable, e.g., 12 months of inactivity → auto-purge or re-consent prompt).
+- Resume PII retained only as long as the candidate's consent window (default configurable, e.g., 12 months of inactivity → auto-purge or re-consent prompt).
 - Audit/scoring logs (feature vectors, not raw PII) retained longer (e.g., 24 months) for compliance/explainability, since they are the record of *why* a decision was made, but are stored separately from directly-identifying fields and linked only via a rotating pseudonymous ID.
 
 ### 8.2 Access Control
@@ -504,7 +504,7 @@ This system is designed so its **core algorithmic engine** maps directly onto th
 
 | DSA-3 Module | System component using it |
 |---|---|
-| Module-2 (String Algorithms) | Résumé/JD text field extraction & fuzzy skill-token matching (KMP/Z/Rabin-Karp), skill-alias trie + Aho-Corasick multi-skill extraction |
+| Module-2 (String Algorithms) | Resume/JD text field extraction & fuzzy skill-token matching (KMP/Z/Rabin-Karp), skill-alias trie + Aho-Corasick multi-skill extraction |
 | Module-3 (Advanced DP) | Wagner–Fischer edit distance for fuzzy skill/company normalization; bitmask DP for minimum skill-set (Sec.5) |
 | Module-4 (Network Flow) | Min-cost max-flow allocation/assignment engine (Sec.4) |
 | Module-5 (NP-Completeness & Approximation) | Set-cover formulation + greedy approximation for minimum skill set (Sec.5); assignment problem framed as an optimization/complexity discussion |
@@ -550,7 +550,7 @@ This system is designed so its **core algorithmic engine** maps directly onto th
 | SLA | Target |
 |---|---|
 | Match query latency | p95 < 200ms |
-| Résumé/job searchable after ingest | < 5 min (streaming path) |
+| Resume/job searchable after ingest | < 5 min (streaming path) |
 | Allocation batch (≤100k candidate–job pairs) | < 60s |
 | System availability | 99.9% monthly |
 | Fairness-parity check | run continuously, alert within 1 hour of threshold breach |
@@ -558,7 +558,7 @@ This system is designed so its **core algorithmic engine** maps directly onto th
 ### 10.2 Test Plans
 
 - **Unit**: every hand-built algorithm (inverted index, trie, KMP/Z/Rabin-Karp, Wagner-Fischer, Hungarian/Hopcroft-Karp, min-cost-flow, bitmask-DP set cover, greedy set cover, MinHash/LSH) has a dedicated test suite against known textbook results and adversarial edge cases (empty input, single element, all-identical, worst-case-collision hash inputs).
-- **Integration**: golden-path fixture (sample résumés + jobs from Sec.11) run end-to-end nightly, diffed against expected ranked output.
+- **Integration**: golden-path fixture (sample resumes + jobs from Sec.11) run end-to-end nightly, diffed against expected ranked output.
 - **Load**: synthetic millions-of-record dataset used to validate the p95/p99 latency SLOs before each major release.
 - **Fairness/regression**: a held-out labeled eval set checked on every model/weight change (Sec.9.3).
 
@@ -573,7 +573,7 @@ This system is designed so its **core algorithmic engine** maps directly onto th
 
 ## 11. Example Data Schemas, Workflows, and Pseudo-code
 
-### 11.1 Sample Résumé (abbreviated)
+### 11.1 Sample Resume (abbreviated)
 
 ```json
 {
@@ -810,7 +810,7 @@ See Section 7 for the endpoint contracts; a full OpenAPI/Swagger spec should be 
 
 | Field | Type | Description | PII? |
 |---|---|---|---|
-| `resume_id` | UUID | Internal résumé identifier | No |
+| `resume_id` | UUID | Internal resume identifier | No |
 | `candidate_id` | UUID | Internal candidate identifier | No |
 | `contact.email_hash` | string | Salted hash of email | Sensitive (hashed) |
 | `skills[].canonical_skill_id` | string | Ontology-normalized skill ID | No |
@@ -832,7 +832,7 @@ See Section 7 for the endpoint contracts; a full OpenAPI/Swagger spec should be 
 ### 12.4 User Guides (outline)
 
 - **Recruiter Quick Start**: post a job → view ranked matches → read match explanations → shortlist/reject → (optional) run team allocation.
-- **Candidate Quick Start**: upload résumé → review parsed/normalized skills → set availability/consent → view job matches.
+- **Candidate Quick Start**: upload resume → review parsed/normalized skills → set availability/consent → view job matches.
 - **Admin Guide**: curate the skill ontology (merge aliases, add nodes), review the fairness dashboard, manage consent/retention exceptions.
 
 ### 12.5 Developer Onboarding Notes

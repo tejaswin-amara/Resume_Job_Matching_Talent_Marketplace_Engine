@@ -3,8 +3,8 @@
 ### 7.1 Core Endpoints
 
 ```
-POST   /v1/resumes                     — upload/create a résumé (multipart or JSON)
-GET    /v1/resumes/{resume_id}         — fetch parsed résumé (access-controlled)
+POST   /v1/resumes                     — upload/create a resume (multipart or JSON)
+GET    /v1/resumes/{resume_id}         — fetch parsed resume (access-controlled)
 POST   /v1/jobs                        — create a job posting
 GET    /v1/jobs/{job_id}               — fetch a job posting
 GET    /v1/jobs/{job_id}/matches       — ranked candidate matches for a job (Sec.3)
@@ -48,7 +48,7 @@ Response 200:
 ### 7.3 Authentication & Rate Limits
 
 - **AuthN**: OAuth2 / signed JWT per caller (candidate, employer, admin service account); mTLS between internal services.
-- **AuthZ**: role-based — candidates can only read/write their own résumé; employers can only read matches for their own postings and never see another employer's raw candidate pool directly (only ranked results for their job); admins have ontology-curation and audit-log access.
+- **AuthZ**: role-based — candidates can only read/write their own resume; employers can only read matches for their own postings and never see another employer's raw candidate pool directly (only ranked results for their job); admins have ontology-curation and audit-log access.
 - **Rate limits**: per-API-key token bucket, e.g. 100 req/min for `/matches` endpoints, 10 req/min for `/allocations/run` (expensive batch op — also queued, not synchronous, above a size threshold).
 
 ### 7.4 Observability
