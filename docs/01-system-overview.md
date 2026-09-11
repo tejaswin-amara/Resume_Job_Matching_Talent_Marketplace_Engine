@@ -13,18 +13,18 @@
 
 ### 1.2 Stakeholders
 
-- **Candidates** — submit résumés, consent to processing, receive match explanations.
-- **Employers / Hiring Managers** — post jobs, define team-composition constraints, receive ranked shortlists.
-- **Talent-Ops / Marketplace Admins** — manage the skill ontology, run allocation batches, monitor fairness dashboards.
-- **Compliance/Legal** — audit scoring decisions, enforce retention and consent policy.
-- **Platform Engineering (this team)** — build, operate, and scale the matching engine.
+* **Candidates** — submit résumés, consent to processing, receive match explanations.
+* **Employers / Hiring Managers** — post jobs, define team-composition constraints, receive ranked shortlists.
+* **Talent-Ops / Marketplace Admins** — manage the skill ontology, run allocation batches, monitor fairness dashboards.
+* **Compliance/Legal** — audit scoring decisions, enforce retention and consent policy.
+* **Platform Engineering (this team)** — build, operate, and scale the matching engine.
 
 ### 1.3 Success Metrics (product-level)
 
-- Time-to-shortlist (job posted → ranked candidate list): < 5 minutes end-to-end (async pipeline) / < 200ms for an already-indexed query.
-- Match acceptance rate (employer marks a suggested candidate as "interview-worthy"): tracked as the primary offline/online eval signal for the scoring model.
-- Fairness parity: selection-rate ratio across protected-adjacent proxy groups (only where legally permitted to measure) stays within a configured band, monitored continuously.
-- Coverage: % of postings that receive at least K qualified candidates within N hours of posting.
+* Time-to-shortlist (job posted → ranked candidate list): < 5 minutes end-to-end (async pipeline) / < 200ms for an already-indexed query.
+* Match acceptance rate (employer marks a suggested candidate as "interview-worthy"): tracked as the primary offline/online eval signal for the scoring model.
+* Fairness parity: selection-rate ratio across protected-adjacent proxy groups (only where legally permitted to measure) stays within a configured band, monitored continuously.
+* Coverage: % of postings that receive at least K qualified candidates within N hours of posting.
 
 ### 1.4 High-Level Architecture
 
@@ -129,6 +129,7 @@ flowchart TD
     Ingestion_Svc -.->|Metrics & Distributed Traces| Telemetry
     Matching_Svc -.->|Metrics & Distributed Traces| Telemetry
     Allocation_Svc -.->|Metrics & Distributed Traces| Telemetry
+```
 
 ### 1.5 Module List
 
