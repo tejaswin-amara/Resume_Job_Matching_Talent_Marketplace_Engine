@@ -4,18 +4,28 @@ services:
   db:
     image: mysql:8.0
     container_name: talent_db
+    env_file:
+      - .env
     environment:
-      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: ${DB_PASS}
       MYSQL_DATABASE: talent_engine
     ports:
       - "3306:3306"
     volumes:
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: talent_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
 
   engine:
     build:
@@ -23,9 +33,10 @@ services:
     container_name: talent_engine_algo
     ports:
       - "8000:8000"
-    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    command: gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
     depends_on:
       - db
+      - redis
 
   backend:
     build:
@@ -33,11 +44,8 @@ services:
     container_name: talent_backend
     ports:
       - "8080:8080"
-    environment:
-      - DB_HOST=db
-      - DB_USER=root
-      - DB_PASS=root
-      - ENGINE_HOST=engine
+    env_file:
+      - .env
     depends_on:
       db:
         condition: service_healthy
@@ -54,3 +62,7 @@ services:
       - NEXT_PUBLIC_API_URL=http://localhost:8080/v1
     depends_on:
       - backend
+
+volumes:
+  db_data:
+  redis_data:

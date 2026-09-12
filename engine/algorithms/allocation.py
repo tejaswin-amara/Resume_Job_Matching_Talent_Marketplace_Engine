@@ -1,6 +1,7 @@
 import networkx as nx
+from typing import List, Dict, Any, Tuple, Optional, Callable, Set
 
-def allocate_min_cost_flow(candidates: list, jobs: list, teams: list, fit_scores: dict):
+def allocate_min_cost_flow(candidates: List[Dict[str, Any]], jobs: List[Dict[str, Any]], teams: List[Dict[str, Any]], fit_scores: Dict[Tuple[str, str], float]) -> List[Tuple[str, str]]:
     """
     Min-cost max-flow allocation using NetworkX
     """
@@ -41,7 +42,7 @@ def allocate_min_cost_flow(candidates: list, jobs: list, teams: list, fit_scores
     except nx.NetworkXUnfeasible:
         return []
 
-def min_candidates_to_cover(skills_universe: list, candidate_skill_masks: list):
+def min_candidates_to_cover(skills_universe: List[str], candidate_skill_masks: List[int]) -> Optional[List[int]]:
     """
     Bitmask DP minimum skill-set (exact for small k)
     """
@@ -51,7 +52,7 @@ def min_candidates_to_cover(skills_universe: list, candidate_skill_masks: list):
     INF = float('inf')
 
     dp = [INF] * (FULL + 1)
-    choice = [None] * (FULL + 1)
+    choice: List[Optional[Tuple[int, int]]] = [None] * (FULL + 1)
     dp[0] = 0
 
     for mask in range(FULL + 1):
@@ -69,18 +70,21 @@ def min_candidates_to_cover(skills_universe: list, candidate_skill_masks: list):
     curr = FULL
     chosen_candidates = []
     while curr > 0:
-        prev_mask, cand_idx = choice[curr]
+        prev = choice[curr]
+        if prev is None:
+            break
+        prev_mask, cand_idx = prev
         chosen_candidates.append(cand_idx)
         curr = prev_mask
 
     return chosen_candidates
 
-def greedy_set_cover(skills_universe: set, candidates: list, cost_fn):
+def greedy_set_cover(skills_universe: Set[str], candidates: List[Dict[str, Any]], cost_fn: Callable[[Dict[str, Any]], float]) -> Dict[str, Any]:
     """
     Greedy weighted set cover (approximation for large k/n)
     """
     uncovered = set(skills_universe)
-    chosen = []
+    chosen: List[Dict[str, Any]] = []
 
     while uncovered:
         best_candidate = None
