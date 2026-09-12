@@ -51,14 +51,15 @@ This engine answers all three with algorithms built from first principles — in
 
 The system runs in three stages: **find**, **rank**, **assign**.
 
-```
-  ┌───────────────┐      ┌───────────────┐      ┌───────────────┐
-  │   RETRIEVAL   │  →   │    SCORING    │  →   │  ALLOCATION   │
-  ├───────────────┤      ├───────────────┤      ├───────────────┤
-  │ Find every     │      │ Rank by fit,   │      │ Assign under   │
-  │ candidate that │      │ exact and      │      │ real-world     │
-  │ could match    │      │ semantic       │      │ constraints    │
-  └───────────────┘      └───────────────┘      └───────────────┘
+```mermaid
+flowchart LR
+    classDef stage fill:#E8F0FE,stroke:#1A56DB,stroke-width:2px,color:#1E3A8A,font-weight:600;
+
+    A["🔍 Retrieval<br/><span style='font-weight:400'>Find every candidate<br/>that could match</span>"]:::stage
+    B["📊 Scoring<br/><span style='font-weight:400'>Rank by fit —<br/>exact and semantic</span>"]:::stage
+    C["🤝 Allocation<br/><span style='font-weight:400'>Assign under<br/>real-world constraints</span>"]:::stage
+
+    A --> B --> C
 ```
 
 **1 · Retrieval** — Build an inverted index over candidate skills and attributes. Aho-Corasick handles multi-pattern skill matching in one pass. Returns a ranked candidate pool in milliseconds, even across millions of resumes.
@@ -117,32 +118,33 @@ Prefer one file? [`FULL-DOCUMENTATION.md`](FULL-DOCUMENTATION.md) concatenates a
 
 Three independent services behind a gateway, one shared data layer, horizontal scaling on every tier.
 
-```
-                        ┌──────────────────────┐
-                        │      Client Layer      │
-                        │   (Web / Mobile UI)    │
-                        └───────────┬────────────┘
-                                    │
-                        ┌───────────▼────────────┐
-                        │      API Gateway       │
-                        │  (auth · rate limits)  │
-                        └──┬──────────┬───────┬──┘
-                           │          │       │
-              ┌────────────▼┐   ┌─────▼────┐ ┌▼─────────────┐
-              │  Ingestion   │   │ Matching  │ │  Allocation  │
-              │    & ETL     │   │ & Scoring │ │ & Optimizer  │
-              └────────────┬─┘   └┬──────────┘ └┬─────────────┘
-                           │       │             │
-                           └───────┼─────────────┘
-                                   │
-                     ┌─────────────▼──────────────┐
-                     │   Storage & Index Layer     │
-                     │ ─────────────────────────── │
-                     │  resume / job documents      │
-                     │  inverted indexes             │
-                     │  vector ANN indexes           │
-                     │  skill ontology graph         │
-                     └───────────────────────────────┘
+```mermaid
+flowchart TD
+    classDef client fill:#E1F5FE,stroke:#0288D1,stroke-width:2px,color:#01579B;
+    classDef gateway fill:#EDE7F6,stroke:#7E57C2,stroke-width:2px,color:#4527A0;
+    classDef service fill:#E8F5E9,stroke:#43A047,stroke-width:2px,color:#1B5E20;
+    classDef data fill:#FFF3E0,stroke:#FB8C00,stroke-width:2px,color:#E65100;
+
+    UI["Client Layer<br/>(Web / Mobile UI)"]:::client
+    GW["API Gateway<br/>(auth · rate limits)"]:::gateway
+
+    subgraph Services ["Core Microservices"]
+        direction LR
+        ING["Ingestion<br/>& ETL"]:::service
+        MATCH["Matching<br/>& Scoring"]:::service
+        ALLOC["Allocation<br/>& Optimizer"]:::service
+    end
+
+    subgraph Storage ["Storage & Index Layer"]
+        direction LR
+        DOCS[("Resume / Job<br/>Documents")]:::data
+        IDX[("Inverted &<br/>Vector Indexes")]:::data
+        GRAPH[("Skill Ontology<br/>Graph")]:::data
+    end
+
+    UI --> GW
+    GW --> ING & MATCH & ALLOC
+    Services --> Storage
 ```
 
 Full diagram and per-module responsibilities → [`docs/01-system-overview.md`](docs/01-system-overview.md)
