@@ -4,3 +4,10 @@ numpy
 scipy
 networkx
 pydantic
+gunicorn
+mypy
+black
+isort
+ruff
+pytest
+pytest-cov

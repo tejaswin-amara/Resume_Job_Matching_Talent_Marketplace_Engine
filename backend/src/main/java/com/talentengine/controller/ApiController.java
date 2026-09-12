@@ -1,30 +1,46 @@
 package com.talentengine.controller;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.talentengine.dto.AllocationRequest;
+import com.talentengine.dto.JobRequest;
+import com.talentengine.dto.ResumeRequest;
+import com.talentengine.service.StorageService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/v1")
 public class ApiController {
 
-    @Autowired
-    private RestTemplate restTemplate;
+    private final RestClient restClient;
+    private final StorageService storageService;
 
-    @Value("${app.engine.url}")
-    private String engineUrl;
+    public ApiController(@Value("${app.engine.url}") String engineUrl, StorageService storageService) {
+        this.restClient = RestClient.builder()
+                .baseUrl(engineUrl)
+                .build();
+        this.storageService = storageService;
+    }
 
     @PostMapping("/resumes")
-    public ResponseEntity<?> createResume(@RequestBody Map<String, Object> payload) {
-        // Mock save logic, forwards to engine if needed
-        return ResponseEntity.ok(Map.of("message", "Resume uploaded successfully"));
+    public ResponseEntity<?> createResume(@Valid @RequestBody ResumeRequest payload) {
+        // Save raw text locally as requested
+        String content = "Candidate ID: " + payload.getCandidateId() + "\nSkills: " + payload.getSkills();
+        ByteArrayInputStream is = new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8));
+        storageService.store(payload.getCandidateId() + ".txt", is);
+
+        return ResponseEntity.ok(Map.of("message", "Resume uploaded successfully and stored locally"));
     }
 
     @PostMapping("/jobs")
-    public ResponseEntity<?> createJob(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<?> createJob(@Valid @RequestBody JobRequest payload) {
+        // Mock save logic
         return ResponseEntity.ok(Map.of("message", "Job posted successfully"));
     }
 
@@ -37,26 +53,32 @@ public class ApiController {
             "weights", Map.of()
         );
         try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(
-                engineUrl + "/api/v1/algorithms/score", request, Map.class);
-            return ResponseEntity.ok(response.getBody());
-        } catch(Exception e) {
+            Map response = restClient.post()
+                    .uri("/api/v1/algorithms/score")
+                    .body(request)
+                    .retrieve()
+                    .body(Map.class);
+            return ResponseEntity.ok(response);
+        } catch(RestClientException e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }
 
     @PostMapping("/allocations/run")
-    public ResponseEntity<?> runAllocation(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<?> runAllocation(@Valid @RequestBody AllocationRequest payload) {
         return ResponseEntity.ok(Map.of("run_id", "alloc_123", "status", "started"));
     }
 
     @PostMapping("/teams/{teamId}/min-skill-set")
     public ResponseEntity<?> minSkillSet(@PathVariable String teamId, @RequestBody Map<String, Object> payload) {
         try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(
-                engineUrl + "/api/v1/algorithms/min-cover/exact", payload, Map.class);
-            return ResponseEntity.ok(response.getBody());
-        } catch(Exception e) {
+            Map response = restClient.post()
+                    .uri("/api/v1/algorithms/min-cover/exact")
+                    .body(payload)
+                    .retrieve()
+                    .body(Map.class);
+            return ResponseEntity.ok(response);
+        } catch(RestClientException e) {
             return ResponseEntity.internalServerError().body(Map.of("error", e.getMessage()));
         }
     }

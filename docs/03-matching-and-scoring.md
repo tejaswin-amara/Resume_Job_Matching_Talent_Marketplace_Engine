@@ -4,7 +4,7 @@
 
 Two-stage architecture:
 
-**Stage A — Retrieval (cheap, high-recall).** Inverted-index Boolean/BM25 retrieval + hard-constraint filtering (location, work-auth, hard-required skills) narrows millions of résumés to a top-N (e.g., N=2,000) candidate set per job in milliseconds.
+**Stage A — Retrieval (cheap, high-recall).** Inverted-index Boolean/BM25 retrieval + hard-constraint filtering (location, work-auth, hard-required skills) narrows millions of resumes to a top-N (e.g., N=2,000) candidate set per job in milliseconds.
 
 **Stage B — Scoring (expensive, high-precision).** A weighted, feature-based, linear-in-features model (chosen for **explainability** over a black-box net, per the fairness/audit requirement) computes a final score:
 
@@ -21,14 +21,14 @@ score(candidate, job) = Σ_i  w_i · f_i(candidate, job)
 | `seniority_alignment` | penalty for over/under-qualification vs. `seniority_level` | 0.10 |
 | `location_fit` | remote/geo compatibility score (0 if hard fail, already filtered) | 0.05 |
 | `historical_acceptance_signal` | learned prior: how often similar candidate→job matches converted to interviews | 0.10 |
-| `recency` | freshness of résumé data | 0.05 |
+| `recency` | freshness of resume data | 0.05 |
 
 Weights are **calibrated**, not hand-guessed at production time: fit via logistic regression / gradient boosting on historical (candidate, job, employer_interview_decision) labels, then the *learned* weights are frozen into the linear explainable model above (distillation of a possibly-nonlinear model into an explainable linear one is preferred to shipping the nonlinear model directly, to preserve the auditability requirement in Sec.8). Recalibrate on a monthly cadence or when feature drift exceeds a threshold (Sec.10).
 
 ### 3.2 Handling Synonyms, Expansion, and Hierarchies in Scoring
 
-- **Synonym expansion at query time**: a job requiring `skill:react_js` is expanded, before retrieval, to the alias set `{react, reactjs, react.js, react_native? (configurable)}` via the ontology, so the inverted-index lookup doesn't miss résumés that used a different literal string.
-- **Hierarchy-aware partial credit**: `hard_skill_coverage` is not binary per skill — a candidate with a **child** of the required skill gets full credit; a candidate with the **direct parent** gets partial credit (configurable, e.g. 0.6); a **sibling** gets smaller partial credit (e.g. 0.3); unrelated gets 0. This is implemented as a shortest-path lookup on the ontology DAG at scoring time (precomputed distance table refreshed on ontology updates, since the DAG changes far less often than résumés).
+- **Synonym expansion at query time**: a job requiring `skill:react_js` is expanded, before retrieval, to the alias set `{react, reactjs, react.js, react_native? (configurable)}` via the ontology, so the inverted-index lookup doesn't miss resumes that used a different literal string.
+- **Hierarchy-aware partial credit**: `hard_skill_coverage` is not binary per skill — a candidate with a **child** of the required skill gets full credit; a candidate with the **direct parent** gets partial credit (configurable, e.g. 0.6); a **sibling** gets smaller partial credit (e.g. 0.3); unrelated gets 0. This is implemented as a shortest-path lookup on the ontology DAG at scoring time (precomputed distance table refreshed on ontology updates, since the DAG changes far less often than resumes).
 
 ### 3.3 Fairness and Bias Considerations
 

@@ -2,7 +2,7 @@
 
 ### 8.1 Data Retention
 
-- Résumé PII retained only as long as the candidate's consent window (default configurable, e.g., 12 months of inactivity → auto-purge or re-consent prompt).
+- Resume PII retained only as long as the candidate's consent window (default configurable, e.g., 12 months of inactivity → auto-purge or re-consent prompt).
 - Audit/scoring logs (feature vectors, not raw PII) retained longer (e.g., 24 months) for compliance/explainability, since they are the record of *why* a decision was made, but are stored separately from directly-identifying fields and linked only via a rotating pseudonymous ID.
 
 ### 8.2 Access Control
@@ -25,7 +25,7 @@ This system is designed so its **core algorithmic engine** maps directly onto th
 
 | DSA-3 Module | System component using it |
 |---|---|
-| Module-2 (String Algorithms) | Résumé/JD text field extraction & fuzzy skill-token matching (KMP/Z/Rabin-Karp), skill-alias trie + Aho-Corasick multi-skill extraction |
+| Module-2 (String Algorithms) | Resume/JD text field extraction & fuzzy skill-token matching (KMP/Z/Rabin-Karp), skill-alias trie + Aho-Corasick multi-skill extraction |
 | Module-3 (Advanced DP) | Wagner–Fischer edit distance for fuzzy skill/company normalization; bitmask DP for minimum skill-set (Sec.5) |
 | Module-4 (Network Flow) | Min-cost max-flow allocation/assignment engine (Sec.4) |
 | Module-5 (NP-Completeness & Approximation) | Set-cover formulation + greedy approximation for minimum skill set (Sec.5); assignment problem framed as an optimization/complexity discussion |

@@ -23,7 +23,7 @@ is hand-built from first principles, no `java.util.*`-equivalent standard librar
 A full engineering documentation package for a **resume ↔ job matching and talent-allocation platform**,
 built as the semester project for **Data Structures and Algorithms – 3 (25CS2103E)** at KLBCH.
 
-The system takes millions of résumés and job postings and answers three hard questions well:
+The system takes millions of resumes and job postings and answers three hard questions well:
 
 | Question | How it's answered |
 |---|---|
@@ -53,7 +53,7 @@ It is written to be picked up directly by a developer (or an AI coding agent) an
 | # | Section | What's inside |
 |---|---|---|
 | 1 | [System Overview](docs/01-system-overview.md) | Objectives, stakeholders, success metrics, architecture diagram |
-| 2 | [Data Model & Normalization](docs/02-data-model-and-normalization.md) | Résumé/job/skill schemas, alias resolution, ontology |
+| 2 | [Data Model & Normalization](docs/02-data-model-and-normalization.md) | Resume/job/skill schemas, alias resolution, ontology |
 | 3 | [Matching & Scoring](docs/03-matching-and-scoring.md) | Fit-scoring model, synonym handling, fairness & bias |
 | 4 | [Scheduling & Allocation](docs/04-scheduling-and-allocation.md) | Assignment problem, constraints, stability |
 | 5 | [Minimum Skill Set](docs/05-minimum-skill-set.md) | Set-cover formulation, partial staffing |
@@ -89,7 +89,7 @@ flowchart TD
     end
     
     subgraph Storage_Layer ["Core Data & Index Layer"]
-        Docs[("Résumé & Job Stores")]:::data
+        Docs[("Resume & Job Stores")]:::data
         Indexes[("Inverted & Vector Indexes")]:::data
         Graph[("Skill Ontology Graph")]:::data
     end
@@ -129,7 +129,7 @@ Full alignment table → [`docs/08-security-privacy-compliance.md §8.5`](docs/0
 <tr><td>Candidate → job assignment</td><td>Hungarian algorithm / Hopcroft–Karp / min-cost max-flow</td></tr>
 <tr><td>Two-sided stable marketplace</td><td>Gale–Shapley deferred acceptance</td></tr>
 <tr><td>Minimum team skill coverage</td><td>Bitmask DP (exact) · Greedy set cover (approximate, O(ln k))</td></tr>
-<tr><td>Near-duplicate résumé detection</td><td>Rolling-hash shingling + MinHash/LSH</td></tr>
+<tr><td>Near-duplicate resume detection</td><td>Rolling-hash shingling + MinHash/LSH</td></tr>
 </table>
 
 Runnable pseudocode for every row above → [`docs/11-schemas-workflows-pseudocode.md`](docs/11-schemas-workflows-pseudocode.md)

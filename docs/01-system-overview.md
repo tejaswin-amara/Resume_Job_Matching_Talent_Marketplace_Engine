@@ -13,7 +13,7 @@
 
 ### 1.2 Stakeholders
 
-* **Candidates** — submit résumés, consent to processing, receive match explanations.
+* **Candidates** — submit resumes, consent to processing, receive match explanations.
 * **Employers / Hiring Managers** — post jobs, define team-composition constraints, receive ranked shortlists.
 * **Talent-Ops / Marketplace Admins** — manage the skill ontology, run allocation batches, monitor fairness dashboards.
 * **Compliance/Legal** — audit scoring decisions, enforce retention and consent policy.
@@ -63,7 +63,7 @@ flowchart TD
     subgraph Storage_Layer ["Core Data & Index Layer"]
         direction TB
         subgraph Doc_Stores ["Document & Relational Stores"]
-            Doc_Resume[("Résumé Store<br/>(Document DB / S3 Vault)")]
+            Doc_Resume[("Resume Store<br/>(Document DB / S3 Vault)")]
             Doc_Job[("Job Store<br/>(PostgreSQL / MongoDB)")]
         end
         subgraph Search_Indexes ["Indexing Systems"]
@@ -94,7 +94,7 @@ flowchart TD
     UI_Recruiter -->|REST / GraphQL| Gateway
 
     %% Gateway to Microservices
-    Gateway -->|Résumé & Job Uploads| Ingestion_Svc
+    Gateway -->|Resume & Job Uploads| Ingestion_Svc
     Gateway -->|Search & Ranking Queries| Matching_Svc
     Gateway -->|Schedule & Slot Allocation| Allocation_Svc
 
@@ -135,7 +135,7 @@ flowchart TD
 
 | Module | Responsibility | Primary algorithms (Sec.) |
 |---|---|---|
-| Ingestion Service | Parse résumé/JD text (PDF/DOCX/plain), extract structured fields, enrich | String matching (KMP/Z), DP edit-distance for field normalization |
+| Ingestion Service | Parse resume/JD text (PDF/DOCX/plain), extract structured fields, enrich | String matching (KMP/Z), DP edit-distance for field normalization |
 | Skill Normalizer | Map raw skill tokens → canonical ontology nodes | Trie + Aho-Corasick, edit-distance fuzzy match, embedding fallback |
 | Indexer | Build inverted index + embedding index | Hand-built inverted index, hashing (rolling hash for shingles) |
 | Matching/Scoring Service | Compute candidate↔job fit score | Weighted feature model, DP for skill-set alignment, cosine sim |

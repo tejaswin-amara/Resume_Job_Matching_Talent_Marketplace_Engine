@@ -23,7 +23,7 @@ DOCS_DIR = ROOT / "docs"
 OUTPUT = ROOT / "FULL-DOCUMENTATION.md"
 
 HEADER = (
-    "# Résumé–Job Matching & Talent-Marketplace Engine\n"
+    "# Resume–Job Matching & Talent-Marketplace Engine\n"
     "## Full Engineering Documentation Package (single-file view)\n\n"
     "> Auto-generated from `docs/*.md` by `scripts/build_full_documentation.py`.\n"
     "> Do not hand-edit this file directly — edit the relevant file under "

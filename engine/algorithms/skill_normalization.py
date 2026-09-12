@@ -1,4 +1,5 @@
 import math
+from typing import Dict, List, Optional, Tuple, Any
 
 def edit_distance(a: str, b: str) -> int:
     """
@@ -25,16 +26,16 @@ def threshold_edit(length: int) -> int:
     return 1 if length <= 5 else 2
 
 class AliasTrieNode:
-    def __init__(self):
-        self.children = {}
-        self.skill_id = None
+    def __init__(self) -> None:
+        self.children: Dict[str, 'AliasTrieNode'] = {}
+        self.skill_id: Optional[str] = None
 
 class AliasTrie:
-    def __init__(self):
+    def __init__(self) -> None:
         self.root = AliasTrieNode()
-        self.entries = [] # For fuzzy fallback simulation
+        self.entries: List[Tuple[str, str]] = [] # For fuzzy fallback simulation
 
-    def add_alias(self, alias: str, skill_id: str):
+    def add_alias(self, alias: str, skill_id: str) -> None:
         node = self.root
         for char in alias:
             if char not in node.children:
@@ -43,7 +44,7 @@ class AliasTrie:
         node.skill_id = skill_id
         self.entries.append((alias, skill_id))
 
-    def exact_lookup(self, key: str) -> AliasTrieNode:
+    def exact_lookup(self, key: str) -> Optional[AliasTrieNode]:
         node = self.root
         for char in key:
             if char not in node.children:
@@ -51,13 +52,13 @@ class AliasTrie:
             node = node.children[char]
         return node if node.skill_id else None
 
-    def all_entries_within_length_window(self, key: str, window: int = 3):
+    def all_entries_within_length_window(self, key: str, window: int = 3) -> List[Tuple[str, str]]:
         return [(a, s) for a, s in self.entries if abs(len(a) - len(key)) <= window]
 
 def strip_and_lowercase(raw_token: str) -> str:
     return ''.join(e for e in raw_token if e.isalnum() or e.isspace()).lower().strip()
 
-def cosine_similarity(v1: list[float], v2: list[float]) -> float:
+def cosine_similarity(v1: List[float], v2: List[float]) -> float:
     if not v1 or not v2 or len(v1) != len(v2): return 0.0
     dot_product = sum(a * b for a, b in zip(v1, v2))
     mag1 = math.sqrt(sum(a * a for a in v1))
@@ -66,13 +67,13 @@ def cosine_similarity(v1: list[float], v2: list[float]) -> float:
     return dot_product / (mag1 * mag2)
 
 class OntologyEmbeddings:
-    def __init__(self):
-        self.skills = {}
+    def __init__(self) -> None:
+        self.skills: Dict[str, List[float]] = {}
 
-    def add_embedding(self, skill_id: str, vector: list[float]):
+    def add_embedding(self, skill_id: str, vector: List[float]) -> None:
         self.skills[skill_id] = vector
 
-    def nearest_neighbor(self, vec: list[float]):
+    def nearest_neighbor(self, vec: List[float]) -> Tuple[Optional[str], float]:
         best_sim = -1.0
         best_skill = None
         for skill_id, s_vec in self.skills.items():
@@ -82,29 +83,27 @@ class OntologyEmbeddings:
                 best_skill = skill_id
         return best_skill, best_sim
 
-def dummy_embed(key: str):
+def dummy_embed(key: str) -> List[float]:
     # Dummy embedding for testing tier 3
     import random
     return [random.random() for _ in range(128)]
 
-def normalize_skill(raw_token: str, alias_trie: AliasTrie, ontology_embeddings: OntologyEmbeddings, threshold_cos: float = 0.8):
+def normalize_skill(raw_token: str, alias_trie: AliasTrie, ontology_embeddings: OntologyEmbeddings, threshold_cos: float = 0.8) -> Dict[str, Any]:
     key = strip_and_lowercase(raw_token)
 
     # Tier 1: exact trie lookup
-    node = alias_trie.exact_lookup(key)
-    if node is not None:
+    if (node := alias_trie.exact_lookup(key)) is not None:
         return {"skill_id": node.skill_id, "confidence": 1.0, "tier": 1}
 
     # Tier 2: bounded fuzzy match
     best = None
     for candidate_alias, skill_id in alias_trie.all_entries_within_length_window(key):
         d = edit_distance(key, candidate_alias)
-        if d <= threshold_edit(len(key)) and (best is None or d < best['distance']):
+        if d <= threshold_edit(len(candidate_alias)) and (best is None or d < best['distance']):
             best = {"skill_id": skill_id, "distance": d}
 
     if best is not None:
-        confidence = 1.0 - best['distance'] / max(len(key), 1)
-        return {"skill_id": best['skill_id'], "confidence": confidence, "tier": 2}
+        return {"skill_id": best['skill_id'], "confidence": 1.0 - best['distance'] / max(len(key), 1), "tier": 2}
 
     # Tier 3: semantic embedding
     vec = dummy_embed(key)
