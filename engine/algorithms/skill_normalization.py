@@ -1,5 +1,6 @@
 import math
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple
+
 
 def edit_distance(a: str, b: str) -> int:
     """
@@ -16,24 +17,27 @@ def edit_distance(a: str, b: str) -> int:
         for j in range(1, m + 1):
             cost = 0 if a[i - 1] == b[j - 1] else 1
             dp[i][j] = min(
-                dp[i - 1][j] + 1,       # deletion
-                dp[i][j - 1] + 1,       # insertion
-                dp[i - 1][j - 1] + cost # substitution
+                dp[i - 1][j] + 1,  # deletion
+                dp[i][j - 1] + 1,  # insertion
+                dp[i - 1][j - 1] + cost,  # substitution
             )
     return dp[n][m]
+
 
 def threshold_edit(length: int) -> int:
     return 1 if length <= 5 else 2
 
+
 class AliasTrieNode:
     def __init__(self) -> None:
-        self.children: Dict[str, 'AliasTrieNode'] = {}
+        self.children: Dict[str, "AliasTrieNode"] = {}
         self.skill_id: Optional[str] = None
+
 
 class AliasTrie:
     def __init__(self) -> None:
         self.root = AliasTrieNode()
-        self.entries: List[Tuple[str, str]] = [] # For fuzzy fallback simulation
+        self.entries: List[Tuple[str, str]] = []  # For fuzzy fallback simulation
 
     def add_alias(self, alias: str, skill_id: str) -> None:
         node = self.root
@@ -52,19 +56,26 @@ class AliasTrie:
             node = node.children[char]
         return node if node.skill_id else None
 
-    def all_entries_within_length_window(self, key: str, window: int = 3) -> List[Tuple[str, str]]:
+    def all_entries_within_length_window(
+        self, key: str, window: int = 3
+    ) -> List[Tuple[str, str]]:
         return [(a, s) for a, s in self.entries if abs(len(a) - len(key)) <= window]
 
+
 def strip_and_lowercase(raw_token: str) -> str:
-    return ''.join(e for e in raw_token if e.isalnum() or e.isspace()).lower().strip()
+    return "".join(e for e in raw_token if e.isalnum() or e.isspace()).lower().strip()
+
 
 def cosine_similarity(v1: List[float], v2: List[float]) -> float:
-    if not v1 or not v2 or len(v1) != len(v2): return 0.0
+    if not v1 or not v2 or len(v1) != len(v2):
+        return 0.0
     dot_product = sum(a * b for a, b in zip(v1, v2))
     mag1 = math.sqrt(sum(a * a for a in v1))
     mag2 = math.sqrt(sum(b * b for b in v2))
-    if mag1 == 0 or mag2 == 0: return 0.0
+    if mag1 == 0 or mag2 == 0:
+        return 0.0
     return dot_product / (mag1 * mag2)
+
 
 class OntologyEmbeddings:
     def __init__(self) -> None:
@@ -83,12 +94,20 @@ class OntologyEmbeddings:
                 best_skill = skill_id
         return best_skill, best_sim
 
+
 def dummy_embed(key: str) -> List[float]:
     # Dummy embedding for testing tier 3
     import random
+
     return [random.random() for _ in range(128)]
 
-def normalize_skill(raw_token: str, alias_trie: AliasTrie, ontology_embeddings: OntologyEmbeddings, threshold_cos: float = 0.8) -> Dict[str, Any]:
+
+def normalize_skill(
+    raw_token: str,
+    alias_trie: AliasTrie,
+    ontology_embeddings: OntologyEmbeddings,
+    threshold_cos: float = 0.8,
+) -> Dict[str, Any]:
     key = strip_and_lowercase(raw_token)
 
     # Tier 1: exact trie lookup
@@ -99,11 +118,17 @@ def normalize_skill(raw_token: str, alias_trie: AliasTrie, ontology_embeddings: 
     best = None
     for candidate_alias, skill_id in alias_trie.all_entries_within_length_window(key):
         d = edit_distance(key, candidate_alias)
-        if d <= threshold_edit(len(candidate_alias)) and (best is None or d < best['distance']):
+        if d <= threshold_edit(len(candidate_alias)) and (
+            best is None or d < best["distance"]
+        ):
             best = {"skill_id": skill_id, "distance": d}
 
     if best is not None:
-        return {"skill_id": best['skill_id'], "confidence": 1.0 - best['distance'] / max(len(key), 1), "tier": 2}
+        return {
+            "skill_id": best["skill_id"],
+            "confidence": 1.0 - best["distance"] / max(len(key), 1),
+            "tier": 2,
+        }
 
     # Tier 3: semantic embedding
     vec = dummy_embed(key)

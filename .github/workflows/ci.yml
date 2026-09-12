@@ -29,16 +29,16 @@ jobs:
         run: |
           cd engine
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          python -m pip install -r requirements.txt
       - name: Lint and Format
         run: |
           cd engine
-          black --check .
-          isort --check-only .
+          python -m black .
+          python -m isort .
       - name: Test
         run: |
           cd engine
-          pytest
+          python -m pytest
 
   frontend-test:
     runs-on: ubuntu-latest
