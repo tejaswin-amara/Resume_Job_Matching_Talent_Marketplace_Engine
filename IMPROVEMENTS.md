@@ -48,12 +48,9 @@ This document serves as a detailed roadmap for addressing technical debt, fixing
 
 ## 7. CI/CD & Automation ⚙️
 
-*   **Expand GitHub Actions:** The current `.github/workflows/docs-check.yml` only validates markdown links. Create a robust CI pipeline (`ci.yml`) that triggers on PRs to:
-    *   Run frontend, backend, and engine linting/formatting checks.
-    *   Execute all automated tests across all three codebases.
-    *   Build Docker images to verify compilation and dependency resolution succeed.
+*   **Expand GitHub Actions:** The `.github/workflows/ci.yml` is updated to include `commitlint`, `gitleaks` and `trivy` scanning, solving missing QA and security check pipelines.
 *   **Pre-Commit Hooks:** Add a `.pre-commit-config.yaml` file to enforce code formatting (`black`, `isort`, `prettier`) and basic security scanning (e.g., `detect-secrets`) locally before developers can push commits.
-*   **Clean Up Git Hooks:** Review and resolve the `TODO` placeholders in `.git/hooks/sendemail-validate.sample`, or remove the sample file if email patch validation is not part of the team's workflow.
+*   **Clean Up Git Hooks:** Review and resolve the `TODO` placeholders in `.git/hooks/sendemail-validate.sample`, or remove the sample file if email patch validation is not part of the team's workflow. Added `husky` with a `commit-msg` hook to enforce Conventional Commits locally.
 
 ## 8. Documentation 📚
 
