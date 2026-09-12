@@ -2,201 +2,323 @@
 
 # 🧭 Resume–Job Matching & Talent-Marketplace Engine
 
-**A DSA-3 semester project that is also a real, production-shaped system design.**
+**Full-stack system design for matching millions of candidates to open roles.**
 
-Every core algorithm — search, fuzzy matching, scoring, optimal assignment, minimum-skill-set coverage —
-is hand-built from first principles, no `java.util.*`-equivalent standard library shortcuts inside the engine.
+Every core algorithm—search, fuzzy matching, scoring, optimal assignment, NP-hard set cover—is built from first principles. No library shortcuts. Built as **DSA-3**, designed to ship.
 
-[![Status](https://img.shields.io/badge/status-documentation%20v1.0-blue)](#-status)
-[![Course](https://img.shields.io/badge/course-DSA--3%20(25CS2103E)-6f42c1)](#-dsa-3-module-mapping)
+[![Status](https://img.shields.io/badge/status-documentation%20v1.0-blue)](docs/01-system-overview.md)
+[![Course](https://img.shields.io/badge/course-DSA--3%20(25CS2103E)-6f42c1)](docs/01-system-overview.md)
 [![University](https://img.shields.io/badge/KLBCH-Odd%20Sem%202026--27-orange)](ABSTRACT/README.md)
-[![Docs](https://img.shields.io/badge/docs-13%20sections-success)](#-documentation)
+[![Docs](https://img.shields.io/badge/docs-13%20sections-success)](docs/01-system-overview.md)
 [![License](https://img.shields.io/badge/license-Academic%20Project-lightgrey)](LICENSE)
-[![Team](https://img.shields.io/badge/team-36%20%C2%B7%20Section%2010-informational)](ABSTRACT/README.md)
+[![Team](https://img.shields.io/badge/team-36%20·%20Section%2010-informational)](ABSTRACT/README.md)
 
 </div>
 
 ---
 
-## 📌 What this is
+## The Problem
 
-A full engineering documentation package for a **resume ↔ job matching and talent-allocation platform**,
-built as the semester project for **Data Structures and Algorithms – 3 (25CS2103E)** at KLBCH.
+At scale, recruitment breaks. Companies with thousands of open roles and millions of candidates need automated systems to answer three hard questions:
 
-The system takes millions of resumes and job postings and answers three hard questions well:
+1. **Search:** Which candidates actually fit this job?
+2. **Match:** How do we assign candidates to roles under real constraints—budget, geography, skill gaps?
+3. **Staff:** What's the minimal hiring set that covers all required skills?
 
-| Question | How it's answered |
-|---|---|
-| 🔎 *Which candidates fit this job?* | Inverted-index retrieval + a calibrated, explainable fit-scoring model |
-| 🧩 *How do we assign candidates to roles under real constraints?* | Bipartite matching / min-cost max-flow, with a stable-matching mode for two-sided marketplaces |
-| 🧠 *What's the smallest set of hires that fully staffs a team?* | Classic NP-hard **set cover** — exact bitmask DP for small teams, greedy approximation at scale |
-
-It is written to be picked up directly by a developer (or an AI coding agent) and implemented module-by-module — see [Phasing](docs/13-phasing-roadmap.md).
-
-> 📄 Submitted for grading? Start with the official **[Project Abstract](ABSTRACT/README.md)** (team, roll numbers, guide, and the submitted abstract PDF).
+This engine answers all three using hand-built algorithms. No black boxes. Every core routine—from inverted-index retrieval to min-cost max-flow to NP-hard set cover—is implemented from first principles.
 
 ---
 
-## 👥 Team
+## How It Works: Three Stages
+
+```
+┌─────────────────┬──────────────────┬──────────────────┐
+│                 │                  │                  │
+│   RETRIEVAL     │     SCORING      │   ALLOCATION     │
+│                 │                  │                  │
+│ Find candidates │ Rank by fit      │ Assign under     │
+│ that match      │ semantically     │ constraints      │
+│ the job         │ and explicitly   │ (budget, skills) │
+│                 │                  │                  │
+└─────────────────┴──────────────────┴──────────────────┘
+```
+
+### Stage 1: Retrieval
+
+**Question:** Which candidates could fit this job?
+
+- Build an **inverted index** of candidate skills and attributes
+- Use **Aho-Corasick** for fast multi-pattern skill matching
+- Return ranked candidate list in milliseconds
+
+### Stage 2: Scoring
+
+**Question:** Which candidates fit *best*?
+
+- **Fuzzy matching:** Handle typos, abbreviations, synonyms (edit distance, prefix matching)
+- **Semantic fallback:** When exact matches fail, use vector embeddings + ANN index
+- **Explainable scoring:** Weighted sum of fit signals (skill match %, years of experience, location proximity, etc.)
+
+### Stage 3: Allocation
+
+**Question:** How do we assign candidates to roles fairly under constraints?
+
+- **One-to-one matching:** Hungarian algorithm or Hopcroft–Karp
+- **One-to-many or many-to-many:** Min-cost max-flow network
+- **Two-sided marketplaces:** Gale–Shapley deferred acceptance (stable matching)
+
+**Bonus: Team Staffing**
+
+Need to hire a team covering all required skills? Use:
+- **Small teams:** Exact solution via bitmask dynamic programming
+- **Large hiring sprees:** Greedy set-cover approximation (O(ln k) optimal)
+
+### The Data Foundation
+
+Before retrieval, normalize everything:
+
+- **Resumes & jobs** → structured skill profiles (not text blobs)
+- **Skill resolution:** "JS" = "JavaScript" = "javascript.ts" (ontology graph + dedup)
+- **Alias handling:** "Python 3.x" matches "Python"
+- **Standardized schemas:** See [`docs/02-data-model-and-normalization.md`](docs/02-data-model-and-normalization.md)
+
+---
+
+## Documentation: 13 Sections
+
+**13 engineering sections** covering every layer: architecture, algorithms, data pipelines, APIs, security, deployment, and phased rollout. Every section includes pseudocode, workflows, and decision rationale.
+
+### Getting Oriented
+
+| Section | What's inside |
+|---------|---|
+| **1** — [System Overview](docs/01-system-overview.md) | High-level architecture, stakeholders, success metrics, module responsibilities |
+| **2** — [Data Model & Normalization](docs/02-data-model-and-normalization.md) | Resume/job schemas, skill resolution, ontology graph design |
+
+### The Three Core Algorithms
+
+| Section | What's inside |
+|---------|---|
+| **3** — [Matching & Scoring](docs/03-matching-and-scoring.md) | Fit-scoring models, fuzzy matching, semantic fallback, fairness & bias |
+| **4** — [Scheduling & Allocation](docs/04-scheduling-and-allocation.md) | Assignment problem formulations, constraints, stable matching |
+| **5** — [Minimum Skill Set](docs/05-minimum-skill-set.md) | Set-cover formulation, exact DP, greedy approximation, O(ln k) guarantee |
+
+### Building & Operating
+
+| Section | What's inside |
+|---------|---|
+| **6** — [Data Pipeline & Indexing](docs/06-data-pipeline-and-indexing.md) | Ingestion, dedup, real-time vs. batch, sharding, index maintenance |
+| **7** — [API & Service Contracts](docs/07-api-and-service-contracts.md) | Endpoint specs, request/response schemas, auth, rate limiting, observability |
+| **8** — [Security, Privacy & Compliance](docs/08-security-privacy-compliance.md) | Data retention, access control, consent, legal, DSA-3 alignment |
+| **9** — [Deployment Architecture](docs/09-deployment-architecture.md) | Tech stack, containerization, CI/CD, horizontal scaling strategy |
+| **10** — [Operational Considerations](docs/10-operational-considerations.md) | Test plans, SLAs, migrations, runbooks, incident response |
+
+### Reference & Implementation
+
+| Section | What's inside |
+|---------|---|
+| **11** — [Schemas, Workflows & Pseudocode](docs/11-schemas-workflows-pseudocode.md) | **Runnable pseudocode for every algorithm** — transcribe directly into your code |
+| **12** — [Documentation Artifacts](docs/12-documentation-artifacts.md) | API reference, data dictionary, glossary, decision log |
+| **13** — [Phasing: MVP → Enhancements](docs/13-phasing-roadmap.md) | Timeline, per-phase deliverables, success criteria, scope per release |
+
+**Single-file version:** [`FULL-DOCUMENTATION.md`](FULL-DOCUMENTATION.md) (auto-generated, kept in sync by CI, never hand-edited)
+
+---
+
+## System Architecture
+
+Three independent microservices, one data layer, scales horizontally.
+
+```
+                          ┌─────────────────────┐
+                          │   Client Layer      │
+                          │  (Web / Mobile UI)  │
+                          └──────────┬──────────┘
+                                     │
+                          ┌──────────▼──────────┐
+                          │   API Gateway       │
+                          │  (Auth, Rate Limit) │
+                          └─┬──────────┬────┬───┘
+                            │          │    │
+                ┌───────────┴┐   ┌─────┴──┐ │
+                │             │   │        │ │
+           ┌────▼────────┐ ┌─▼───▼─────┐ ┌┴─▼────────┐
+           │ Ingestion & │ │ Matching  │ │Allocation │
+           │    ETL      │ │ & Scoring │ │ & Optimize│
+           └────┬────────┘ └─┬───────┬─┘ └─┬─────────┘
+                │            │       │     │
+                └────────────┴───┬───┴─────┘
+                                 │
+                    ┌────────────▼──────────────┐
+                    │   Storage & Index Layer   │
+                    ├──────────────────────────┤
+                    │ • Resume/Job documents   │
+                    │ • Inverted indexes       │
+                    │ • Vector ANN indexes     │
+                    │ • Skill ontology graph   │
+                    └──────────────────────────┘
+```
+
+Each service scales independently. See [`docs/01-system-overview.md`](docs/01-system-overview.md) for the full architecture and module breakdown.
+
+---
+
+## Core Algorithms: Hand-Built from First Principles
+
+No `java.util.*` shortcuts. No off-the-shelf matching libraries. Every algorithm is implemented from scratch:
+
+| Problem | Algorithm | Reference |
+|---------|-----------|-----------|
+| Exact/fuzzy skill matching | Trie + Aho-Corasick, Wagner-Fischer edit distance | [`03-matching-and-scoring.md`](docs/03-matching-and-scoring.md) |
+| Semantic fallback matching | Cosine similarity + ANN index (vector embeddings) | [`03-matching-and-scoring.md`](docs/03-matching-and-scoring.md) |
+| Candidate retrieval at scale | Hand-built inverted index with skip pointers | [`06-data-pipeline-and-indexing.md`](docs/06-data-pipeline-and-indexing.md) |
+| Candidate ↔ job assignment | Hungarian / Hopcroft–Karp / min-cost max-flow | [`04-scheduling-and-allocation.md`](docs/04-scheduling-and-allocation.md) |
+| Two-sided marketplace | Gale–Shapley deferred acceptance (stable matching) | [`04-scheduling-and-allocation.md`](docs/04-scheduling-and-allocation.md) |
+| Minimum team skill set | Bitmask DP (exact) · Greedy set cover (O(ln k)) | [`05-minimum-skill-set.md`](docs/05-minimum-skill-set.md) |
+| Near-duplicate detection | Rolling-hash shingling + MinHash/LSH | [`06-data-pipeline-and-indexing.md`](docs/06-data-pipeline-and-indexing.md) |
+
+**Pseudocode for every algorithm** is in [`docs/11-schemas-workflows-pseudocode.md`](docs/11-schemas-workflows-pseudocode.md). Transcribe directly into your code.
+
+---
+
+## DSA-3 Syllabus → Implementation
+
+The system **is** the course. Every algorithm traces directly back to the **DSA-3 (25CS2103E)** module:
+
+| Module | Topic | How we use it | Reference |
+|--------|-------|---|---|
+| **2** | String Algorithms | KMP, Z-algorithm, Rabin-Karp, Aho-Corasick → fast skill extraction | `03-matching-and-scoring.md` |
+| **3** | Advanced DP | Wagner–Fischer (skill edit distance) + Bitmask DP (team coverage) | `05-minimum-skill-set.md` |
+| **4** | Network Flow | Min-cost max-flow → optimal candidate ↔ role allocation | `04-scheduling-and-allocation.md` |
+| **5** | NP & Approximation | Set-cover formulation + greedy approx (O(ln k) guarantee) | `05-minimum-skill-set.md` |
+| **6** | Randomized & Parallel | MinHash/LSH (dedup), reservoir sampling, parallel prefix-sum | `06-data-pipeline-and-indexing.md` |
+
+This project *implements* the DSA-3 syllabus. See [`docs/08-security-privacy-compliance.md §8.5`](docs/08-security-privacy-compliance.md) for full alignment notes.
+
+---
+
+## Status & Timeline
+
+| Phase | What you build | Current state |
+|-------|---|---|
+| **Phase 0** | Single-machine MVP, core algorithms, demo scale | Documented, not yet built |
+| **Phase 1** | Multi-role allocation, fairness auditing, logging | Planned |
+| **Phase 2** | Millions of records, sharding, distributed indexing | Planned |
+| **Phase 3** | Continuous enhancements, A/B testing, optimization | Post-launch |
+
+Detailed phase breakdown and deliverables are in [`docs/13-phasing-roadmap.md`](docs/13-phasing-roadmap.md).
+
+---
+
+## Getting Started
+
+### I want to understand the system (5–15 minutes)
+
+1. Read [`docs/01-system-overview.md`](docs/01-system-overview.md) — high-level architecture and stakeholders
+2. Skim the three core sections: [`03-matching-and-scoring.md`](docs/03-matching-and-scoring.md), [`04-scheduling-and-allocation.md`](docs/04-scheduling-and-allocation.md), [`05-minimum-skill-set.md`](docs/05-minimum-skill-set.md)
+3. Look at the phasing in [`13-phasing-roadmap.md`](docs/13-phasing-roadmap.md) to see what's MVP vs. future work
+
+### I want to build it (implementer's path)
+
+```bash
+git clone https://github.com/tejaswin-amara/Resume_Job_Matching_Talent_Marketplace_Engine.git
+cd Resume_Job_Matching_Talent_Marketplace_Engine
+```
+
+Then:
+
+1. **Read the foundation:** [`docs/01-system-overview.md`](docs/01-system-overview.md) + [`docs/02-data-model-and-normalization.md`](docs/02-data-model-and-normalization.md)
+2. **Check the scope:** What's Phase 0 MVP? See [`docs/13-phasing-roadmap.md`](docs/13-phasing-roadmap.md)
+3. **Code from pseudocode:** For each algorithm, go to [`docs/11-schemas-workflows-pseudocode.md`](docs/11-schemas-workflows-pseudocode.md) and transcribe directly. This is your spec.
+4. **Test as you go:** Each feature needs a known-answer unit test before merge. See [`docs/10-operational-considerations.md`](docs/10-operational-considerations.md) for testing strategy.
+
+### I want the full picture (reference)
+
+→ Read [`FULL-DOCUMENTATION.md`](FULL-DOCUMENTATION.md) (all 13 sections concatenated, single file, auto-generated)
+
+---
+
+## Repository Structure
+
+```
+Resume_Job_Matching_Talent_Marketplace_Engine/
+│
+├── 📖 README.md                        (you are here)
+├── 📜 LICENSE                          (academic use)
+├── 📋 FULL-DOCUMENTATION.md            (auto-generated, CI-synced)
+│
+├── 📁 ABSTRACT/                        (grading submission)
+│   ├── README.md                       (team & submission info)
+│   └── DSA-3 Project Abstract.pdf      (official abstract)
+│
+├── 📁 docs/                            (13 engineering sections)
+│   ├── 01-system-overview.md
+│   ├── 02-data-model-and-normalization.md
+│   ├── 03-matching-and-scoring.md
+│   ├── 04-scheduling-and-allocation.md
+│   ├── 05-minimum-skill-set.md
+│   ├── 06-data-pipeline-and-indexing.md
+│   ├── 07-api-and-service-contracts.md
+│   ├── 08-security-privacy-compliance.md
+│   ├── 09-deployment-architecture.md
+│   ├── 10-operational-considerations.md
+│   ├── 11-schemas-workflows-pseudocode.md   (← START HERE for coding)
+│   ├── 12-documentation-artifacts.md
+│   └── 13-phasing-roadmap.md                (← MVP scope & timeline)
+│
+├── 📁 scripts/
+│   └── build_full_documentation.py     (keeps FULL-DOCUMENTATION.md in sync)
+│
+├── 📁 backend/                         (Spring Boot microservices)
+│   ├── src/                            (Ingestion, Matching, Allocation)
+│   ├── pom.xml
+│   └── Dockerfile
+│
+├── 📁 frontend/                        (Next.js + TypeScript)
+│   ├── app/                            (React components)
+│   ├── package.json
+│   └── Dockerfile
+│
+├── 📁 engine/                          (Python algorithms & ML)
+│   ├── algorithms/                     (matching, allocation, set cover)
+│   ├── main.py
+│   ├── requirements.txt
+│   └── Dockerfile
+│
+├── docker-compose.yml                  (local dev: all 3 services)
+├── commitlint.config.js                (conventional commits)
+└── .github/workflows/
+    └── (CI/CD: docs sync, link validation)
+```
+
+---
+
+## Team & Attribution
+
+**Team 36 · Section 10**  
+KL Deemed to be University, Hyderabad · DSA-3 (25CS2103E) · Odd Semester 2026–27
 
 | Name | Roll Number |
-|---|---|
+|------|---|
 | Tejaswin Amara | 2520090104 |
 | Sai Ram Pragnay Murikipudi | 2520090081 |
 
-**Team 36 · Section 10** · Guide: Miss. Chandusha Kanda, Assistant Professor, CSIT · KL Deemed to be University, Hyderabad
+**Course Guide:** Miss. Chandusha Kanda, Assistant Professor, CSIT
+
+See [`ABSTRACT/README.md`](ABSTRACT/README.md) for full submission details and abstract PDF.
 
 ---
 
-## 📚 Documentation
+## License
 
-| # | Section | What's inside |
-|---|---|---|
-| 1 | [System Overview](docs/01-system-overview.md) | Objectives, stakeholders, success metrics, architecture diagram |
-| 2 | [Data Model & Normalization](docs/02-data-model-and-normalization.md) | Resume/job/skill schemas, alias resolution, ontology |
-| 3 | [Matching & Scoring](docs/03-matching-and-scoring.md) | Fit-scoring model, synonym handling, fairness & bias |
-| 4 | [Scheduling & Allocation](docs/04-scheduling-and-allocation.md) | Assignment problem, constraints, stability |
-| 5 | [Minimum Skill Set](docs/05-minimum-skill-set.md) | Set-cover formulation, partial staffing |
-| 6 | [Data Pipeline & Indexing](docs/06-data-pipeline-and-indexing.md) | Ingestion, dedup, real-time vs. batch, sharding |
-| 7 | [API & Service Contracts](docs/07-api-and-service-contracts.md) | Endpoints, schemas, auth, observability |
-| 8 | [Security, Privacy & Compliance](docs/08-security-privacy-compliance.md) | Retention, access control, consent, DSA-3 alignment |
-| 9 | [Deployment Architecture](docs/09-deployment-architecture.md) | Tech stack, CI/CD, scaling plan |
-| 10 | [Operational Considerations](docs/10-operational-considerations.md) | SLAs, test plans, migrations |
-| 11 | [Schemas, Workflows & Pseudocode](docs/11-schemas-workflows-pseudocode.md) | Runnable pseudocode for every core algorithm |
-| 12 | [Documentation Artifacts](docs/12-documentation-artifacts.md) | API reference, data dictionary, glossary |
-| 13 | [Phasing: MVP → Enhancements](docs/13-phasing-roadmap.md) | Timeline, deliverables per phase |
-
-> 📄 Prefer one long scroll? The entire package is also available as a single file: **[`FULL-DOCUMENTATION.md`](FULL-DOCUMENTATION.md)** *(auto-generated from `docs/` by [`scripts/build_full_documentation.py`](scripts/build_full_documentation.py) — always in sync, never hand-edited, enforced by CI)*
-
----
-
-## 🏗️ Architecture at a Glance
-
-```mermaid
-flowchart TD
-    classDef client fill:#E1F5FE,stroke:#0288D1,stroke-width:2px,color:#01579B;
-    classDef gateway fill:#EDE7F6,stroke:#7E57C2,stroke-width:2px,color:#4527A0;
-    classDef service fill:#E8F5E9,stroke:#43A047,stroke-width:2px,color:#1B5E20;
-    classDef data fill:#FFF3E0,stroke:#FB8C00,stroke-width:2px,color:#E65100;
-    
-    UI_Client["Client Layer (Web/App UI)"]:::client
-    Gateway["API Gateway (Auth / Rate Limiting)"]:::gateway
-    
-    subgraph Core_Services ["Core Microservices"]
-        Ingestion_Svc["Ingestion & ETL Service"]:::service
-        Matching_Svc["Matching & Scoring Service"]:::service
-        Allocation_Svc["Allocation & Optimization Service"]:::service
-    end
-    
-    subgraph Storage_Layer ["Core Data & Index Layer"]
-        Docs[("Resume & Job Stores")]:::data
-        Indexes[("Inverted & Vector Indexes")]:::data
-        Graph[("Skill Ontology Graph")]:::data
-    end
-    
-    UI_Client --> Gateway
-    Gateway --> Ingestion_Svc & Matching_Svc & Allocation_Svc
-    Core_Services --> Storage_Layer
-```
-
-Full diagram and module responsibilities → [`docs/01-system-overview.md`](docs/01-system-overview.md)
-
----
-
-## 🎓 DSA-3 Module Mapping
-
-Every algorithmic component traces back to a specific course module — this isn't decoration on top of a black box, the syllabus **is** the engine:
-
-| Module | Course Topic | Where it lives in this system |
-|---|---|---|
-| **2** | String Algorithms | KMP, Z-function, Rabin-Karp, Aho-Corasick → skill/field extraction |
-| **3** | Advanced DP | Wagner–Fischer edit distance → skill normalization · Bitmask DP → minimum skill set |
-| **4** | Network Flow | Min-cost max-flow → candidate ↔ job allocation under team constraints |
-| **5** | NP-Completeness & Approximation | Set cover + greedy approximation → minimum viable team skill set |
-| **6** | Randomized & Parallel Algorithms | MinHash/LSH dedup · reservoir sampling · parallel prefix-sum |
-
-Full alignment table → [`docs/08-security-privacy-compliance.md §8.5`](docs/08-security-privacy-compliance.md#85-dsa-3-syllabus-alignment-course-specific-note)
-
----
-
-## 🧮 Core Algorithms (all hand-built, no stdlib collections)
-
-<table>
-<tr><th>Problem</th><th>Algorithm</th></tr>
-<tr><td>Exact/fuzzy skill matching</td><td>Trie + Aho-Corasick, Wagner-Fischer edit distance</td></tr>
-<tr><td>Semantic fallback matching</td><td>Cosine similarity over embeddings (ANN index)</td></tr>
-<tr><td>Candidate retrieval at scale</td><td>Hand-built inverted index with skip pointers</td></tr>
-<tr><td>Candidate → job assignment</td><td>Hungarian algorithm / Hopcroft–Karp / min-cost max-flow</td></tr>
-<tr><td>Two-sided stable marketplace</td><td>Gale–Shapley deferred acceptance</td></tr>
-<tr><td>Minimum team skill coverage</td><td>Bitmask DP (exact) · Greedy set cover (approximate, O(ln k))</td></tr>
-<tr><td>Near-duplicate resume detection</td><td>Rolling-hash shingling + MinHash/LSH</td></tr>
-</table>
-
-Runnable pseudocode for every row above → [`docs/11-schemas-workflows-pseudocode.md`](docs/11-schemas-workflows-pseudocode.md)
-
----
-
-## 🗺️ Status
-
-| Phase | Focus | State |
-|---|---|---|
-| **Phase 0 — MVP** | Single-machine pipeline, core algorithms, course-demo scale | 📝 Documented, not yet built |
-| **Phase 1 — Core Product** | Multi-role allocation, fairness/audit logging | ⏳ Planned |
-| **Phase 2 — Scale & Hardening** | Millions-of-records, sharding, monitoring | ⏳ Planned |
-| **Phase 3 — Continuous Enhancement** | Recalibration, A/B testing, parallel optimizations | ⏳ Ongoing (post-launch) |
-
-Full timeline and per-phase deliverables → [`docs/13-phasing-roadmap.md`](docs/13-phasing-roadmap.md)
-
----
-
-## 🚀 Getting Started (for implementers)
-
-```bash
-git clone https://github.com/sairampragney/DSA-3-PROJECT-.git
-cd DSA-3-PROJECT-
-```
-
-1. Start with [`docs/01-system-overview.md`](docs/01-system-overview.md) and [`docs/02-data-model-and-normalization.md`](docs/02-data-model-and-normalization.md).
-2. Build the Phase 0 MVP list in [`docs/13-phasing-roadmap.md`](docs/13-phasing-roadmap.md).
-3. Use [`docs/11-schemas-workflows-pseudocode.md`](docs/11-schemas-workflows-pseudocode.md) as the direct spec for each hand-built algorithm — every function there is meant to be transcribed into working code, not paraphrased.
-4. Every new/changed feature needs a known-answer unit test before merge — see [`docs/10-operational-considerations.md`](docs/10-operational-considerations.md).
-
----
-
-## 🗂️ Repo Structure
-
-```
-DSA-3-PROJECT-/
-├── README.md                             ← you are here
-├── LICENSE                               ← academic-use license
-├── FULL-DOCUMENTATION.md                 ← auto-generated, do not hand-edit
-├── scripts/
-│   └── build_full_documentation.py       ← regenerates FULL-DOCUMENTATION.md
-├── .github/workflows/
-│   └── docs-check.yml                    ← CI: sync check + link check
-├── ABSTRACT/
-│   ├── README.md                         ← team, roll numbers, guide, summary
-│   └── DSA-3 Project Abstract.pdf        ← officially submitted abstract
-└── docs/
-    ├── 01-system-overview.md
-    ├── 02-data-model-and-normalization.md
-    ├── 03-matching-and-scoring.md
-    ├── 04-scheduling-and-allocation.md
-    ├── 05-minimum-skill-set.md
-    ├── 06-data-pipeline-and-indexing.md
-    ├── 07-api-and-service-contracts.md
-    ├── 08-security-privacy-compliance.md
-    ├── 09-deployment-architecture.md
-    ├── 10-operational-considerations.md
-    ├── 11-schemas-workflows-pseudocode.md
-    ├── 12-documentation-artifacts.md
-    └── 13-phasing-roadmap.md
-```
+This is an academic project. See [`LICENSE`](LICENSE) for terms.
 
 ---
 
 <div align="center">
 
-Built by **Tejaswin Amara** & **Sai Ram Pragnay Murikipudi** (Team 36) for **DSA-3 (25CS2103E)** · KLBCH · Odd Semester 2026-27
+**Built by Team 36 for DSA-3 (25CS2103E) at KLBCH**
+
+Questions? Open an issue. Contributions welcome.
 
 </div>
