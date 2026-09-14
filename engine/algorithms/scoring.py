@@ -1,14 +1,25 @@
+from typing import Dict, Any, Tuple, List, Optional
+from algorithms.skill_normalization import cosine_similarity
+
 def propagation_credit(dist: int) -> float:
+    """
+    Returns credit multiplier based on the ontological distance.
+    Exact match = 1.0, Parent/Child = 0.6, Sibling = 0.3, otherwise 0.0.
+    """
     if dist == 0: return 1.0     # exact
     if dist == 1: return 0.6     # parent/child
     if dist == 2: return 0.3     # sibling
     return 0.0
 
 class OntologyDistanceTable:
-    def __init__(self):
-        self.distances = {}
+    """
+    Holds ontological distances between pairs of canonical skills.
+    Distances are symmetric.
+    """
+    def __init__(self) -> None:
+        self.distances: Dict[Tuple[str, str], int] = {}
 
-    def add_distance(self, s1: str, s2: str, dist: int):
+    def add_distance(self, s1: str, s2: str, dist: int) -> None:
         self.distances[(s1, s2)] = dist
         self.distances[(s2, s1)] = dist
 
@@ -16,24 +27,52 @@ class OntologyDistanceTable:
         if s1 == s2: return 0
         return self.distances.get((s1, s2), 999)
 
-def seniority_penalty(candidate, job) -> float:
-    # Dummy implementation for seniority alignment
+def seniority_penalty(candidate: Dict[str, Any], job: Dict[str, Any]) -> float:
+    """
+    Dummy implementation for seniority alignment.
+    Returns a score factor.
+    """
     return 1.0
 
-def lookup_historical_acceptance(cand_cluster, job_cluster) -> float:
+def lookup_historical_acceptance(cand_cluster: Optional[str], job_cluster: Optional[str]) -> float:
+    """
+    Dummy implementation for historical candidate/job cluster matching.
+    Returns an acceptance factor.
+    """
     return 0.5
 
-def recency_score(parsed_at) -> float:
+def recency_score(parsed_at: Optional[Any]) -> float:
+    """
+    Dummy implementation for candidate profile recency score.
+    Returns a score factor.
+    """
     return 1.0
 
-def cosine(v1, v2) -> float:
-    from engine.algorithms.skill_normalization import cosine_similarity
+def cosine(v1: List[float], v2: List[float]) -> float:
+    """
+    Helper to compute cosine similarity using the internal algorithm.
+    """
     return cosine_similarity(v1, v2)
 
-def fit_score(candidate: dict, job: dict, ontology_distance_table: OntologyDistanceTable, weights: dict):
-    hard_total, hard_covered = 0, 0
-    soft_total, soft_covered = 0, 0
-    matched = []
+def fit_score(candidate: Dict[str, Any], job: Dict[str, Any], ontology_distance_table: OntologyDistanceTable, weights: Dict[str, float]) -> Tuple[float, Dict[str, Any]]:
+    """
+    Computes a fit score between a candidate and a job using the weighted evaluation
+    of hard/soft skills, depth, semantic similarity, seniority, location, and historical data.
+
+    Args:
+        candidate: Candidate dictionary with 'skills', 'embedding_vector', etc.
+        job: Job dictionary with 'required_skills', 'embedding_vector', etc.
+        ontology_distance_table: Distance table for calculating propagation credit.
+        weights: Dictionary of weights for scoring dimensions.
+
+    Returns:
+        A tuple of (final_score, explanation_dict).
+    """
+    hard_total: float = 0.0
+    hard_covered: float = 0.0
+    soft_total: float = 0.0
+    soft_covered: float = 0.0
+    matched: List[Dict[str, Any]] = []
 
     for req in job.get('required_skills', []):
         w = req.get('weight', 1.0)
@@ -43,7 +82,7 @@ def fit_score(candidate: dict, job: dict, ontology_distance_table: OntologyDista
         else:
             soft_total += w
 
-        best_credit = 0
+        best_credit: float = 0.0
         for mention in candidate.get('skills', []):
             dist = ontology_distance_table.lookup(mention.get('canonical_skill_id'), req.get('canonical_skill_id'))
             credit = propagation_credit(dist)
@@ -63,8 +102,8 @@ def fit_score(candidate: dict, job: dict, ontology_distance_table: OntologyDista
         if best_credit > 0:
             matched.append({'skill': req.get('canonical_skill_id'), 'credit': best_credit})
 
-    hard_skill_coverage = hard_covered / max(hard_total, 1)
-    soft_skill_coverage = soft_covered / max(soft_total, 1)
+    hard_skill_coverage = hard_covered / hard_total if hard_total > 0 else 1.0
+    soft_skill_coverage = soft_covered / soft_total if soft_total > 0 else 1.0
 
     skill_depth_bonus = sum(m['credit'] for m in matched) / max(len(matched), 1) if matched else 0
 

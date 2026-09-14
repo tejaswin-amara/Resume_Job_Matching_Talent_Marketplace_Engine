@@ -1,10 +1,21 @@
 import networkx as nx
+from typing import List, Dict, Tuple, Any, Set, Optional, Callable
 
-def allocate_min_cost_flow(candidates: list, jobs: list, teams: list, fit_scores: dict):
+def allocate_min_cost_flow(candidates: List[Dict[str, Any]], jobs: List[Dict[str, Any]], teams: List[Dict[str, Any]], fit_scores: Dict[Tuple[str, str], float]) -> List[Tuple[str, str]]:
     """
-    Min-cost max-flow allocation using NetworkX
+    Min-cost max-flow allocation using NetworkX to optimally assign candidates to jobs
+    while satisfying team headcount constraints and maximizing fit scores.
+
+    Args:
+        candidates: List of candidate dictionaries.
+        jobs: List of job dictionaries.
+        teams: List of team dictionaries.
+        fit_scores: Dictionary mapping (candidate_id, job_id) to fit scores.
+
+    Returns:
+        A list of tuples (candidate_id, job_id) representing the optimal assignments.
     """
-    graph = nx.DiGraph()
+    graph: nx.DiGraph = nx.DiGraph()
     source, sink = "S", "T"
 
     for c in candidates:
@@ -41,17 +52,25 @@ def allocate_min_cost_flow(candidates: list, jobs: list, teams: list, fit_scores
     except nx.NetworkXUnfeasible:
         return []
 
-def min_candidates_to_cover(skills_universe: list, candidate_skill_masks: list):
+def min_candidates_to_cover(skills_universe: List[str], candidate_skill_masks: List[int]) -> Optional[List[int]]:
     """
-    Bitmask DP minimum skill-set (exact for small k)
+    Bitmask DP minimum skill-set (exact for small k) to find the minimum number
+    of candidates needed to cover all required skills in the universe.
+
+    Args:
+        skills_universe: List of skills required.
+        candidate_skill_masks: List of integer bitmasks representing candidate skills.
+
+    Returns:
+        A list of candidate indices that form the minimum set cover, or None if impossible.
     """
     k = len(skills_universe)
     n = len(candidate_skill_masks)
     FULL = (1 << k) - 1
     INF = float('inf')
 
-    dp = [INF] * (FULL + 1)
-    choice = [None] * (FULL + 1)
+    dp: List[float] = [INF] * (FULL + 1)
+    choice: List[Optional[Tuple[int, int]]] = [None] * (FULL + 1)
     dp[0] = 0
 
     for mask in range(FULL + 1):
@@ -67,20 +86,31 @@ def min_candidates_to_cover(skills_universe: list, candidate_skill_masks: list):
 
     # Reconstruct
     curr = FULL
-    chosen_candidates = []
+    chosen_candidates: List[int] = []
     while curr > 0:
-        prev_mask, cand_idx = choice[curr]
+        val = choice[curr]
+        if val is None: break
+        prev_mask, cand_idx = val
         chosen_candidates.append(cand_idx)
         curr = prev_mask
 
     return chosen_candidates
 
-def greedy_set_cover(skills_universe: set, candidates: list, cost_fn):
+def greedy_set_cover(skills_universe: Set[str], candidates: List[Dict[str, Any]], cost_fn: Callable[[Dict[str, Any]], float]) -> Dict[str, Any]:
     """
-    Greedy weighted set cover (approximation for large k/n)
+    Greedy weighted set cover (approximation for large k/n) to select candidates
+    minimizing cost while maximizing new skill coverage.
+
+    Args:
+        skills_universe: Set of required skills.
+        candidates: List of candidate dictionaries.
+        cost_fn: Callable to evaluate a candidate's cost.
+
+    Returns:
+        A dictionary with 'chosen' candidates and 'residual_uncovered' skills.
     """
     uncovered = set(skills_universe)
-    chosen = []
+    chosen: List[Dict[str, Any]] = []
 
     while uncovered:
         best_candidate = None

@@ -11,3 +11,4 @@ isort
 ruff
 pytest
 pytest-cov
+types-networkx

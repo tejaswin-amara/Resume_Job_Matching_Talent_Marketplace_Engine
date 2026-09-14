@@ -2,7 +2,7 @@
 
 # Resume–Job Matching & Talent-Marketplace Engine
 
-### A recruitment system built the hard way — every algorithm from first principles.
+### A modern recruitment system built the hard way — every algorithm from first principles (Python 3.12+).
 
 Search, fuzzy matching, fit scoring, optimal assignment, NP-hard set cover — no library shortcuts, no black boxes. Written as the **DSA-3** semester project, engineered like production software.
 
