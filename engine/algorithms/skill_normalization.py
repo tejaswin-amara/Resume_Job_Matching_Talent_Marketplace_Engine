@@ -89,6 +89,21 @@ def dummy_embed(key: str) -> List[float]:
     return [random.random() for _ in range(128)]
 
 def normalize_skill(raw_token: str, alias_trie: AliasTrie, ontology_embeddings: OntologyEmbeddings, threshold_cos: float = 0.8) -> Dict[str, Any]:
+    """
+    Normalizes a raw skill string into a canonical skill ID using a three-tier approach:
+    Tier 1: Exact string match using an alias trie.
+    Tier 2: Bounded fuzzy match using edit distance.
+    Tier 3: Semantic embedding match using cosine similarity.
+
+    Args:
+        raw_token: The raw skill string to normalize.
+        alias_trie: The alias trie data structure.
+        ontology_embeddings: The ontology embeddings for semantic match.
+        threshold_cos: The cosine similarity threshold for semantic matches.
+
+    Returns:
+        A dictionary containing the canonical 'skill_id', 'confidence' score, and matched 'tier'.
+    """
     key = strip_and_lowercase(raw_token)
 
     # Tier 1: exact trie lookup
@@ -96,14 +111,14 @@ def normalize_skill(raw_token: str, alias_trie: AliasTrie, ontology_embeddings: 
         return {"skill_id": node.skill_id, "confidence": 1.0, "tier": 1}
 
     # Tier 2: bounded fuzzy match
-    best = None
+    best: Optional[Dict[str, Any]] = None
     for candidate_alias, skill_id in alias_trie.all_entries_within_length_window(key):
         d = edit_distance(key, candidate_alias)
         if d <= threshold_edit(len(candidate_alias)) and (best is None or d < best['distance']):
             best = {"skill_id": skill_id, "distance": d}
 
     if best is not None:
-        return {"skill_id": best['skill_id'], "confidence": 1.0 - best['distance'] / max(len(key), 1), "tier": 2}
+        return {"skill_id": best['skill_id'], "confidence": 1.0 - float(best['distance']) / max(len(key), 1), "tier": 2}
 
     # Tier 3: semantic embedding
     vec = dummy_embed(key)
