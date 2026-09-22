@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-const isGithubPages = process.env.GITHUB_ACTIONS || process.env.BUILD_FOR_GH_PAGES === 'true'
+const isGithubPages = process.env.BUILD_FOR_GH_PAGES === 'true'
 const repoName = 'Resume_Job_Matching_Talent_Marketplace_Engine'
 
 const nextConfig = {
