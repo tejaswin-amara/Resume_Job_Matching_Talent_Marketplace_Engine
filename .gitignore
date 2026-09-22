@@ -4,6 +4,7 @@ node_modules/
 __pycache__/
 backend/target/
 frontend/.next/
+frontend/out/
 frontend/node_modules/
 engine/__pycache__/
 engine/algorithms/__pycache__/
