@@ -368,7 +368,7 @@ export default function Home() {
 
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-              ● Vercel Production Ready
+              ● GitHub Pages Production Ready
             </span>
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30">
               DSA-3 Core First Principles
