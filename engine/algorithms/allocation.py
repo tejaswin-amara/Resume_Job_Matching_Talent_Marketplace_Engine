@@ -1,7 +1,10 @@
-import networkx as nx
-from typing import List, Dict, Tuple, Any, Set, Optional, Callable
+from collections.abc import Callable
+from typing import Any
 
-def allocate_min_cost_flow(candidates: List[Dict[str, Any]], jobs: List[Dict[str, Any]], teams: List[Dict[str, Any]], fit_scores: Dict[Tuple[str, str], float]) -> List[Tuple[str, str]]:
+import networkx as nx
+
+
+def allocate_min_cost_flow(candidates: list[dict[str, Any]], jobs: list[dict[str, Any]], teams: list[dict[str, Any]], fit_scores: dict[tuple[str, str], float]) -> list[tuple[str, str]]:
     """
     Min-cost max-flow allocation using NetworkX to optimally assign candidates to jobs
     while satisfying team headcount constraints and maximizing fit scores.
@@ -33,7 +36,7 @@ def allocate_min_cost_flow(candidates: List[Dict[str, Any]], jobs: List[Dict[str
 
         graph.add_edge(j['id'], team_node, capacity=j.get('headcount', 1), weight=0)
 
-    team_nodes = set(f"team_{j['team_id']}_{j.get('role_category', 'default')}" for j in jobs)
+    team_nodes = {f"team_{j['team_id']}_{j.get('role_category', 'default')}" for j in jobs}
     for team_node in team_nodes:
         # Assuming team subcap is the sum of headcounts for its jobs for now
         subcap = sum(j.get('headcount', 1) for j in jobs if f"team_{j['team_id']}_{j.get('role_category', 'default')}" == team_node)
@@ -52,7 +55,7 @@ def allocate_min_cost_flow(candidates: List[Dict[str, Any]], jobs: List[Dict[str
     except nx.NetworkXUnfeasible:
         return []
 
-def min_candidates_to_cover(skills_universe: List[str], candidate_skill_masks: List[int]) -> Optional[List[int]]:
+def min_candidates_to_cover(skills_universe: list[str], candidate_skill_masks: list[int]) -> list[int] | None:
     """
     Bitmask DP minimum skill-set (exact for small k) to find the minimum number
     of candidates needed to cover all required skills in the universe.
@@ -69,8 +72,8 @@ def min_candidates_to_cover(skills_universe: List[str], candidate_skill_masks: L
     FULL = (1 << k) - 1
     INF = float('inf')
 
-    dp: List[float] = [INF] * (FULL + 1)
-    choice: List[Optional[Tuple[int, int]]] = [None] * (FULL + 1)
+    dp: list[float] = [INF] * (FULL + 1)
+    choice: list[tuple[int, int] | None] = [None] * (FULL + 1)
     dp[0] = 0
 
     for mask in range(FULL + 1):
@@ -86,7 +89,7 @@ def min_candidates_to_cover(skills_universe: List[str], candidate_skill_masks: L
 
     # Reconstruct
     curr = FULL
-    chosen_candidates: List[int] = []
+    chosen_candidates: list[int] = []
     while curr > 0:
         val = choice[curr]
         if val is None: break
@@ -96,7 +99,7 @@ def min_candidates_to_cover(skills_universe: List[str], candidate_skill_masks: L
 
     return chosen_candidates
 
-def greedy_set_cover(skills_universe: Set[str], candidates: List[Dict[str, Any]], cost_fn: Callable[[Dict[str, Any]], float]) -> Dict[str, Any]:
+def greedy_set_cover(skills_universe: set[str], candidates: list[dict[str, Any]], cost_fn: Callable[[dict[str, Any]], float]) -> dict[str, Any]:
     """
     Greedy weighted set cover (approximation for large k/n) to select candidates
     minimizing cost while maximizing new skill coverage.
@@ -110,7 +113,7 @@ def greedy_set_cover(skills_universe: Set[str], candidates: List[Dict[str, Any]]
         A dictionary with 'chosen' candidates and 'residual_uncovered' skills.
     """
     uncovered = set(skills_universe)
-    chosen: List[Dict[str, Any]] = []
+    chosen: list[dict[str, Any]] = []
 
     while uncovered:
         best_candidate = None

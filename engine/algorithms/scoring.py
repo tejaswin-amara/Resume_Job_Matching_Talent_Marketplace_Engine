@@ -1,5 +1,7 @@
-from typing import Dict, Any, Tuple, List, Optional
+from typing import Any
+
 from algorithms.skill_normalization import cosine_similarity
+
 
 def propagation_credit(dist: int) -> float:
     """
@@ -17,7 +19,7 @@ class OntologyDistanceTable:
     Distances are symmetric.
     """
     def __init__(self) -> None:
-        self.distances: Dict[Tuple[str, str], int] = {}
+        self.distances: dict[tuple[str, str], int] = {}
 
     def add_distance(self, s1: str, s2: str, dist: int) -> None:
         self.distances[(s1, s2)] = dist
@@ -27,34 +29,34 @@ class OntologyDistanceTable:
         if s1 == s2: return 0
         return self.distances.get((s1, s2), 999)
 
-def seniority_penalty(candidate: Dict[str, Any], job: Dict[str, Any]) -> float:
+def seniority_penalty(candidate: dict[str, Any], job: dict[str, Any]) -> float:
     """
     Dummy implementation for seniority alignment.
     Returns a score factor.
     """
     return 1.0
 
-def lookup_historical_acceptance(cand_cluster: Optional[str], job_cluster: Optional[str]) -> float:
+def lookup_historical_acceptance(cand_cluster: str | None, job_cluster: str | None) -> float:
     """
     Dummy implementation for historical candidate/job cluster matching.
     Returns an acceptance factor.
     """
     return 0.5
 
-def recency_score(parsed_at: Optional[Any]) -> float:
+def recency_score(parsed_at: Any | None) -> float:
     """
     Dummy implementation for candidate profile recency score.
     Returns a score factor.
     """
     return 1.0
 
-def cosine(v1: List[float], v2: List[float]) -> float:
+def cosine(v1: list[float], v2: list[float]) -> float:
     """
     Helper to compute cosine similarity using the internal algorithm.
     """
     return cosine_similarity(v1, v2)
 
-def fit_score(candidate: Dict[str, Any], job: Dict[str, Any], ontology_distance_table: OntologyDistanceTable, weights: Dict[str, float]) -> Tuple[float, Dict[str, Any]]:
+def fit_score(candidate: dict[str, Any], job: dict[str, Any], ontology_distance_table: OntologyDistanceTable, weights: dict[str, float]) -> tuple[float, dict[str, Any]]:
     """
     Computes a fit score between a candidate and a job using the weighted evaluation
     of hard/soft skills, depth, semantic similarity, seniority, location, and historical data.
@@ -72,7 +74,7 @@ def fit_score(candidate: Dict[str, Any], job: Dict[str, Any], ontology_distance_
     hard_covered: float = 0.0
     soft_total: float = 0.0
     soft_covered: float = 0.0
-    matched: List[Dict[str, Any]] = []
+    matched: list[dict[str, Any]] = []
 
     for req in job.get('required_skills', []):
         w = req.get('weight', 1.0)
