@@ -9,3 +9,5 @@ engine/__pycache__/
 engine/algorithms/__pycache__/
 .env
 backend/upload-dir/
+.vercel
+frontend/.vercel/
