@@ -5,7 +5,7 @@ spring:
     password: ${DB_PASS:root}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
@@ -16,7 +16,7 @@ server:
 
 app:
   jwt:
-    secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+    secret: ${JWT_SECRET}
     expiration: 86400000 # 24 hours
   engine:
     url: http://${ENGINE_HOST:localhost}:8000

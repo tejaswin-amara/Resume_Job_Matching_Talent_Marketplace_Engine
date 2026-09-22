@@ -3,6 +3,7 @@ package com.talentengine.controller;
 import com.talentengine.dto.AllocationRequest;
 import com.talentengine.dto.JobRequest;
 import com.talentengine.dto.ResumeRequest;
+import com.talentengine.dto.MinSkillSetRequest;
 import com.talentengine.service.StorageService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,8 +22,8 @@ public class ApiController {
     private final RestClient restClient;
     private final StorageService storageService;
 
-    public ApiController(@Value("${app.engine.url}") String engineUrl, StorageService storageService) {
-        this.restClient = RestClient.builder()
+    public ApiController(RestClient.Builder restClientBuilder, @Value("${app.engine.url}") String engineUrl, StorageService storageService) {
+        this.restClient = restClientBuilder
                 .baseUrl(engineUrl)
                 .build();
         this.storageService = storageService;
@@ -70,7 +71,7 @@ public class ApiController {
     }
 
     @PostMapping("/teams/{teamId}/min-skill-set")
-    public ResponseEntity<?> minSkillSet(@PathVariable String teamId, @RequestBody Map<String, Object> payload) {
+    public ResponseEntity<?> minSkillSet(@PathVariable String teamId, @Valid @RequestBody MinSkillSetRequest payload) {
         try {
             Map response = restClient.post()
                     .uri("/api/v1/algorithms/min-cover/exact")
