@@ -18,3 +18,5 @@ engine/.venv/
 engine/.pytest_cache/
 .coverage
 engine/.coverage
+frontend/playwright-report/
+frontend/test-results/

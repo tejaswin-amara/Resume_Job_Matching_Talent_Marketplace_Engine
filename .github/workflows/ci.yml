@@ -83,12 +83,12 @@ jobs:
       - name: Lint and Format
         run: |
           cd engine
-          python -m black --check . || echo "Black formatting needed"
-          python -m isort --check-only . || echo "Isort formatting needed"
+          python -m black --check .
+          python -m isort --check-only .
       - name: Test
         run: |
           cd engine
-          python -m pytest || echo "Pytest exited with $?, passing if it's 5 (no tests)"
+          python -m pytest
 
   frontend-test:
     runs-on: ubuntu-latest
@@ -104,5 +104,5 @@ jobs:
       - name: Test
         run: |
           cd frontend
-          npm test || echo "npm test failed or is missing"
-          npx playwright test || echo "playwright test failed or is missing"
+          npm test
+          npx playwright test
