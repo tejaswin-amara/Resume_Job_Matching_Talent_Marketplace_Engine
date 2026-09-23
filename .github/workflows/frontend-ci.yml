@@ -1,0 +1,50 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  gitleaks:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  frontend-check:
+    name: Frontend Lint, Typecheck, and Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: pnpm install --frozen-lockfile
+      - name: Biome Lint
+        working-directory: ./frontend
+        run: pnpm lint
+      - name: Typecheck
+        working-directory: ./frontend
+        run: pnpm typecheck
+      - name: Vitest Unit & Component Tests
+        working-directory: ./frontend
+        run: pnpm test
+      - name: Build Next.js
+        working-directory: ./frontend
+        run: pnpm build

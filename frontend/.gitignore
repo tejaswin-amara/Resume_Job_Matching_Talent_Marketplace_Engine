@@ -1,1 +1,14 @@
-.vercel
+node_modules/
+.pnpm-store/
+.next/
+out/
+dist/
+build/
+coverage/
+playwright-report/
+test-results/
+.vercel/
+*.tsbuildinfo
+next-env.d.ts
+.DS_Store
+*.log

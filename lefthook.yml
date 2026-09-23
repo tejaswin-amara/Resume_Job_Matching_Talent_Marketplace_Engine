@@ -1,0 +1,11 @@
+# Lefthook git hooks configuration
+pre-commit:
+  parallel: true
+  commands:
+    frontend-biome:
+      root: "frontend/"
+      glob: "*.{js,ts,jsx,tsx,json,css}"
+      run: pnpm biome check --no-errors-on-unmatched {staged_files}
+    frontend-typecheck:
+      root: "frontend/"
+      run: pnpm typecheck

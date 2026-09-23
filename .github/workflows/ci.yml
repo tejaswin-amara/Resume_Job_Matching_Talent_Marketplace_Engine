@@ -94,15 +94,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
       - name: Install dependencies
-        run: cd frontend && npm ci
-      - name: Install Playwright Browsers
-        run: cd frontend && npx playwright install --with-deps chromium
+        run: cd frontend && pnpm install --frozen-lockfile
+      - name: Lint and Typecheck
+        run: |
+          cd frontend
+          pnpm lint
+          pnpm typecheck
       - name: Test
         run: |
           cd frontend
-          npm test
-          npx playwright test
+          pnpm test

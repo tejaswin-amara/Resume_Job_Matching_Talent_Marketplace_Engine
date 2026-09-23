@@ -7,10 +7,12 @@
     "doc": "docs"
   },
   "scripts": {
-    "build": "npm run build --prefix frontend",
-    "dev": "npm run dev --prefix frontend",
-    "start": "npm run start --prefix frontend",
-    "test": "npm test --prefix frontend",
+    "build": "pnpm --prefix frontend build",
+    "dev": "pnpm --prefix frontend dev",
+    "start": "pnpm --prefix frontend start",
+    "test": "pnpm --prefix frontend test",
+    "lint": "pnpm --prefix frontend lint",
+    "typecheck": "pnpm --prefix frontend typecheck",
     "prepare": "husky"
   },
   "repository": {
