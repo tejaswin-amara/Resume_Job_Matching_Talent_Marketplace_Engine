@@ -1,20 +1,25 @@
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
+COPY package.json pnpm-lock.yaml ./
+RUN corepack enable && pnpm install --frozen-lockfile
 COPY . .
-RUN npm run build
+RUN pnpm build
 
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
+LABEL org.opencontainers.image.title="Talent Engine Frontend" \
+      org.opencontainers.image.description="Next.js dark-themed glassmorphic marketplace UI" \
+      org.opencontainers.image.version="1.0.0" \
+      org.opencontainers.image.vendor="Tejaswin Amara" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/tejaswin-amara/resume_job_matching_talent_marketplace_engine"
+
 WORKDIR /app
-COPY --from=builder /app/package.json .
-COPY --from=builder /app/package-lock.json .
-COPY --from=builder /app/next.config.js ./
+ENV NODE_ENV=production
+RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 USER nextjs
 EXPOSE 3000
-ENV PORT 3000
+ENV PORT=3000
 CMD ["node", "server.js"]
