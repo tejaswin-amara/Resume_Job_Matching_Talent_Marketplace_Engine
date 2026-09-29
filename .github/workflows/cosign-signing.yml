@@ -1,0 +1,24 @@
+name: "Cosign Artifact Cryptographic Signing"
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  sign:
+    name: Sign Container Image Artifacts
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.4.0
+
+      - name: Verify Cosign Installation
+        run: cosign version

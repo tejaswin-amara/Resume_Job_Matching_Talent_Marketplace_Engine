@@ -1,0 +1,18 @@
+{
+    admin off
+}
+
+:80 {
+    # Reverse proxy routes
+    handle /api/v1/algorithms/* {
+        reverse_proxy engine:8000
+    }
+
+    handle /v1/* {
+        reverse_proxy backend:8080
+    }
+
+    handle /* {
+        reverse_proxy frontend:3000
+    }
+}
