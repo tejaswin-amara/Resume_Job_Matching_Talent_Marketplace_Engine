@@ -6,7 +6,7 @@ Zero-library constraint: built strictly on primitive arrays and random index sel
 """
 
 import random
-from collections.abc import Iterator, Sequence
+from typing import Iterator, Sequence
 from typing import Generic, TypeVar
 
 T = TypeVar("T")

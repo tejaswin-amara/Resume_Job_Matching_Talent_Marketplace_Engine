@@ -4,7 +4,7 @@ Used for instant talent marketplace skill mask density queries and candidate ava
 Zero-library constraint: built strictly with primitive arrays and bitwise manipulation.
 """
 
-from collections.abc import Sequence
+from typing import Sequence
 
 
 class SOSDynamicProgramming:

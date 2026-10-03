@@ -5,7 +5,7 @@ Runtime complexity: O(n^2 / epsilon).
 Zero-library constraint: built strictly with primitive DP arrays and pointer reconstruction.
 """
 
-from collections.abc import Sequence
+from typing import Sequence
 from typing import Any, NamedTuple
 
 

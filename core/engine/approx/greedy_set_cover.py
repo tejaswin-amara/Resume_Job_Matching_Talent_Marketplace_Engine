@@ -4,7 +4,7 @@ Solves minimum-cost set cover to assemble a talent cohort covering all required 
 Zero-library constraint: built strictly on primitive sets and arrays.
 """
 
-from collections.abc import Sequence
+from typing import Sequence
 from typing import Any, NamedTuple
 
 

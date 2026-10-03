@@ -3,7 +3,7 @@
 Zero-library constraint: built strictly using primitive arrays and pointer math.
 """
 
-from collections.abc import Iterator
+from typing import Iterator
 from typing import Any, Generic, TypeVar
 
 T = TypeVar("T")

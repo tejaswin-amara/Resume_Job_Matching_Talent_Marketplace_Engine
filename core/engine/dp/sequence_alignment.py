@@ -4,7 +4,7 @@ Used for career trajectory progression and experience sequence alignment.
 Zero-library constraint: built with 2D DP matrices and backtrack pointers.
 """
 
-from collections.abc import Sequence
+from typing import Sequence
 from typing import Any, NamedTuple, TypeVar
 
 T = TypeVar("T")

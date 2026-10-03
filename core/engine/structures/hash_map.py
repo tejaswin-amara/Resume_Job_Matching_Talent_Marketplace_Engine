@@ -4,7 +4,7 @@ Zero-library constraint: built strictly using primitive arrays and linked bucket
 Resize trigger: load factor >= 0.75.
 """
 
-from collections.abc import Iterator
+from typing import Iterator
 from typing import Any, Generic, Optional, TypeVar
 
 from core.engine.structures.array_list import CustomArrayList

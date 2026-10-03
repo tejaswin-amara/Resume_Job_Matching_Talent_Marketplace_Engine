@@ -5,7 +5,7 @@ and tree-based parallel reduction with exact work-span accounting.
 Zero-library constraint: built strictly on primitive arrays and bitwise indexing.
 """
 
-from collections.abc import Callable, Sequence
+from typing import Callable, Sequence
 from typing import NamedTuple
 
 

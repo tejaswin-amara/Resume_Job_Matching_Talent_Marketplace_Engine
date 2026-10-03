@@ -5,7 +5,7 @@ Guarantees size <= 2 * OPT.
 Zero-library constraint: built strictly on primitive arrays and sets.
 """
 
-from collections.abc import Sequence
+from typing import Sequence
 from typing import Any
 
 

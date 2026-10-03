@@ -3,7 +3,7 @@
 Zero-library constraint: built strictly using reference pointers and node objects.
 """
 
-from collections.abc import Iterator
+from typing import Iterator
 from typing import Generic, Optional, TypeVar
 
 T = TypeVar("T")

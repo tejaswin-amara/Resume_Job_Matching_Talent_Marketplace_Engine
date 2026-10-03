@@ -3,7 +3,7 @@
 Zero-library constraint: built strictly on primitive lists and linked Edge object references.
 """
 
-from collections.abc import Iterator
+from typing import Iterator
 from typing import Optional
 
 
