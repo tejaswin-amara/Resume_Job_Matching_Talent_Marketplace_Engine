@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { api } from "@/lib/api";
 import { Loader2, ArrowLeft, Network, GitBranch, Users } from "lucide-react";
 
