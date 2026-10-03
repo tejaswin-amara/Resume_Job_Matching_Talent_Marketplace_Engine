@@ -1,0 +1,76 @@
+rules:
+  - id: fastapi-wildcard-cors-with-credentials
+    patterns:
+      - pattern-either:
+          - pattern: |
+              $APP.add_middleware(
+                  CORSMiddleware,
+                  ...,
+                  allow_origins=["*"],
+                  ...,
+                  allow_credentials=True,
+                  ...
+              )
+          - pattern: |
+              $APP.add_middleware(
+                  CORSMiddleware,
+                  ...,
+                  allow_credentials=True,
+                  ...,
+                  allow_origins=["*"],
+                  ...
+              )
+    message: "Wildcard CORS origin with allow_credentials=True is insecure and rejected by modern browsers."
+    languages: [python]
+    severity: ERROR
+
+  - id: avoid-raw-sql-formatting
+    patterns:
+      - pattern-either:
+          - pattern: $DB.execute(f"...")
+          - pattern: text(f"...")
+          - pattern: $DB.execute("..." % ...)
+          - pattern: $DB.execute("...".format(...))
+    message: "Potential SQL injection vulnerability: do not format strings directly into SQL queries. Use parameterized queries."
+    languages: [python]
+    severity: ERROR
+
+  - id: hardcoded-secret-keys
+    patterns:
+      - pattern: $VAR = "..."
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: (?i)(secret_key|api_key|private_key|jwt_secret)
+    message: "Hardcoded secret detected. Use environment variables or secret manager."
+    languages: [python]
+    severity: WARNING
+
+  - id: missing-request-timeout
+    patterns:
+      - pattern-either:
+          - pattern: httpx.get($URL, ...)
+          - pattern: httpx.post($URL, ...)
+          - pattern: requests.get($URL, ...)
+          - pattern: requests.post($URL, ...)
+      - pattern-not: $METHOD(..., timeout=$TIMEOUT, ...)
+    message: "HTTP client call without explicit timeout can lead to resource starvation."
+    languages: [python]
+    severity: WARNING
+
+  - id: forbidden-core-stdlib-imports
+    paths:
+      include:
+        - "core/engine/**"
+    patterns:
+      - pattern-either:
+          - pattern: import collections
+          - pattern: from collections import ...
+          - pattern: import heapq
+          - pattern: from heapq import ...
+          - pattern: import bisect
+          - pattern: from bisect import ...
+          - pattern: import networkx
+          - pattern: from networkx import ...
+    message: "Violates cardinal constraint: standard collection and algorithm libraries are forbidden inside core/engine/."
+    languages: [python]
+    severity: ERROR

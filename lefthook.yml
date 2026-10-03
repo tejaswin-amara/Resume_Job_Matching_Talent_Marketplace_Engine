@@ -1,0 +1,13 @@
+pre-commit:
+  commands:
+    ruff-format:
+      glob: "*.py"
+      run: ruff format {staged_files}
+    ruff-lint:
+      glob: "*.py"
+      run: ruff check --fix {staged_files}
+    check-imports:
+      glob: "core/engine/**/*.py"
+      run: if grep -E 'import (collections|heapq|bisect|networkx)' {staged_files} || grep -E 'from (collections|heapq|bisect|networkx) import' {staged_files}; then echo 'Forbidden imports in core/engine'; exit 1; fi
+    gitleaks:
+      run: gitleaks detect --no-git -v

@@ -1,0 +1,59 @@
+import uuid
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from core.parsers.factory import ParserFactory
+from core.scoring.embeddings import EmbeddingService
+from core.scoring.skill_extractor import SkillExtractor
+from db.models import Candidate, CandidateSkill, Skill
+from db.session import get_db_session
+
+router = APIRouter(prefix="/api/v1/resumes", tags=["resumes"])
+
+
+@router.post("/upload")
+async def upload_resume(file: UploadFile = File(...), db: AsyncSession = Depends(get_db_session)):
+    content = await file.read()
+    parser = ParserFactory.from_content_type(file.content_type, content)
+
+    try:
+        text = parser.parse(content)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    emb_service = EmbeddingService()
+    embedding = emb_service.encode(text)
+
+    extractor = SkillExtractor()
+    found_skills = extractor.extract(text)
+
+    candidate = Candidate(
+        name=file.filename or "Unknown",
+        email=f"{uuid.uuid4()}@example.com",  # dummy for now
+        raw_text=text,
+        embedding=embedding,
+    )
+    db.add(candidate)
+    await db.flush()
+
+    for s in found_skills:
+        result = await db.execute(select(Skill).where(Skill.name == s))
+        skill = result.scalar_one_or_none()
+        if not skill:
+            skill = Skill(name=s)
+            db.add(skill)
+            await db.flush()
+
+        db.add(CandidateSkill(candidate_id=candidate.id, skill_id=skill.id))
+
+    await db.commit()
+    return {"id": str(candidate.id), "skills_extracted": list(found_skills)}
+
+
+@router.post("/parse-text")
+async def parse_text(text: str):
+    extractor = SkillExtractor()
+    skills = extractor.extract(text)
+    return {"skills": list(skills)}
