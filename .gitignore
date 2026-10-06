@@ -41,11 +41,16 @@ venv.bak/
 *.swp
 *.swo
 
-# Node
+# Node / Next.js
 node_modules/
 dist/
 build/
 .npm/
+.next/
+*.tsbuildinfo
+
+# Agents / Swarm scratch
+.agents/
 
 # Logs
 logs/
