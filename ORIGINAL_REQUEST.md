@@ -114,3 +114,45 @@ Extract testing-specific skills and security validation rules from the `affaan-m
 ## 2026-10-01T14:24:32Z
 
 The server restarted and execution was interrupted. You had completed surveying and were about to start Phase 1 (M1 - ECC Rules Integration) and Phase 2 (M2 - Backend Verification Matrix). Please resume execution of the plan to fulfill all requirements.
+
+## 2026-10-06T03:27:21Z
+
+# Teamwork Project Prompt
+
+Fix all P0-P3 security, architecture, and operational issues in the bold-chandrasekhar repository based on the Awesome Dev Pipeline audit, particularly enforcing React Bits for the frontend and fixing backend async/event-loop issues.
+
+Working directory: c:\Users\speed\Documents\antigravity\bold-chandrasekhar
+Integrity mode: development
+
+## Requirements
+
+### R1. Security & Reliability (P0)
+Fix the CORS wildcard vulnerability in `api/app.py`. Wrap all CPU-bound operations (parsing, embedding, string matching) in `asyncio.to_thread` to prevent event loop starvation. Fix the false-positive `/health/ready` probe to ping the database. Configure production database connection pooling with `pool_pre_ping=True`.
+
+### R2. Frontend Architecture (P1)
+Rip out the custom UI primitives in `web/src/components/ui/` and refactor the Next.js frontend pages to exclusively use React Bits (https://reactbits.dev/) for all components, backgrounds, and animations. Ensure no shadcn/ui or other competing libraries are used.
+
+### R3. Core Engine Defects (P1)
+Resolve the algorithmic defects found in `core/engine/` (Dinic infinite loop when source==sink, bitmask TSP duplication of the start node, marketplace job capacity ignoring multi-headcount, tree reduction zero-padding identity violation).
+
+### R4. CI/CD & DX (P2/P3)
+Fix the Ruff lint errors breaking CI (`uv run ruff check .`). Pin GitHub Actions (`aquasecurity/trivy-action` to a specific version instead of `@master`). Add a proper `.dockerignore`. Configure basic OpenTelemetry Collector instrumentation in the backend.
+
+## Acceptance Criteria
+
+### Security & Reliability
+- [ ] `api/app.py` no longer uses `allow_origins=["*"]` with `allow_credentials=True`.
+- [ ] CPU-heavy routes (`/api/v1/resumes/upload`) use `asyncio.to_thread` for heavy operations.
+- [ ] `/health/ready` executes a successful `SELECT 1` database ping.
+
+### Frontend (React Bits)
+- [ ] The Next.js app renders successfully and imports UI components exclusively from React Bits (no `shadcn/ui`).
+- [ ] Custom primitives in `web/src/components/ui/` that conflict with React Bits are removed.
+
+### Core Engine
+- [ ] `core/engine/flow/dinic.py` returns 0.0 when source == sink.
+- [ ] `core/engine/dp/bitmask_tsp.py` does not duplicate the start node in its tour.
+
+### CI/CD
+- [ ] `uv run ruff check .` passes without errors.
+- [ ] `.dockerignore` exists and ignores `.git`, `.venv`, and `node_modules`.

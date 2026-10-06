@@ -120,12 +120,14 @@ class ParallelPrimitives:
         cls,
         data: Sequence[float | int],
         op: Callable[[float | int, float | int], float | int] = lambda x, y: x + y,
+        identity: float | int | None = None,
     ) -> ReductionResult:
         """Tree-based parallel reduction with O(N) work and O(log N) span."""
         n = len(data)
         if n == 0:
+            default_val = identity if identity is not None else 0
             return ReductionResult(
-                value=0,
+                value=default_val,
                 metrics=ParallelMetrics(work=0, span=0, parallelism=1.0),
             )
         if n == 1:

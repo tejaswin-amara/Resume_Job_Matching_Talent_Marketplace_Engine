@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -19,15 +20,15 @@ async def upload_resume(file: UploadFile = File(...), db: AsyncSession = Depends
     parser = ParserFactory.from_content_type(file.content_type, content)
 
     try:
-        text = parser.parse(content)
+        text = await asyncio.to_thread(parser.parse, content)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
     emb_service = EmbeddingService()
-    embedding = emb_service.encode(text)
+    embedding = await asyncio.to_thread(emb_service.encode, text)
 
     extractor = SkillExtractor()
-    found_skills = extractor.extract(text)
+    found_skills = await asyncio.to_thread(extractor.extract, text)
 
     candidate = Candidate(
         name=file.filename or "Unknown",
@@ -55,5 +56,5 @@ async def upload_resume(file: UploadFile = File(...), db: AsyncSession = Depends
 @router.post("/parse-text")
 async def parse_text(text: str):
     extractor = SkillExtractor()
-    skills = extractor.extract(text)
+    skills = await asyncio.to_thread(extractor.extract, text)
     return {"skills": list(skills)}

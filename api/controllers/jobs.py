@@ -1,8 +1,10 @@
+import asyncio
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from api.errors import ProblemDetailException
 from api.schemas import JobCreate, JobResponse
@@ -17,7 +19,7 @@ router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
 async def create_job(job_in: JobCreate, db: AsyncSession = Depends(get_db_session)):
     emb_service = EmbeddingService()
     text = f"{job_in.title} {job_in.description} {job_in.requirements}"
-    embedding = emb_service.encode(text)
+    embedding = await asyncio.to_thread(emb_service.encode, text)
 
     job = JobPosting(
         title=job_in.title,
@@ -44,13 +46,47 @@ async def create_job(job_in: JobCreate, db: AsyncSession = Depends(get_db_sessio
 
     await db.commit()
     await db.refresh(job)
-    return job
+    return JobResponse(
+        id=job.id,
+        title=job.title,
+        department=job.department,
+        description=job.description,
+        requirements=job.requirements,
+        min_experience=job.min_experience,
+        max_experience=job.max_experience,
+        location=job.location,
+        headcount=job.headcount,
+        skills=job_in.skills,
+        created_at=job.created_at,
+    )
 
 
 @router.get("", response_model=list[JobResponse])
 async def list_jobs(skip: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db_session)):
-    result = await db.execute(select(JobPosting).offset(skip).limit(limit))
-    return result.scalars().all()
+    query = (
+        select(JobPosting)
+        .options(selectinload(JobPosting.skills).selectinload(JobSkillRequirement.skill))
+        .offset(skip)
+        .limit(limit)
+    )
+    result = await db.execute(query)
+    jobs = result.scalars().all()
+    return [
+        JobResponse(
+            id=j.id,
+            title=j.title,
+            department=j.department,
+            description=j.description,
+            requirements=j.requirements,
+            min_experience=j.min_experience,
+            max_experience=j.max_experience,
+            location=j.location,
+            headcount=j.headcount,
+            skills=[req.skill.name for req in j.skills if req.skill] if j.skills else [],
+            created_at=j.created_at,
+        )
+        for j in jobs
+    ]
 
 
 @router.get("/{id}/matches")

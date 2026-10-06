@@ -47,10 +47,12 @@ class JobNode:
         job_id: Any,
         required_skills: list[str] | None = None,
         capacity: int = 1,
+        headcount: int | None = None,
     ) -> None:
         self.job_id = job_id
         self.required_skills = required_skills or []
-        self.capacity = capacity
+        self.capacity = headcount if headcount is not None else capacity
+        self.headcount = self.capacity
 
 
 class MarketplaceFlowNetwork:
@@ -68,6 +70,20 @@ class MarketplaceFlowNetwork:
         self.job_skills: dict[Any, set[str]] = {}
         self.edge_scores: dict[tuple[int, int], float] = {}
 
+    @staticmethod
+    def _resolve_job_capacity(j: Any) -> int:
+        """Resolve job capacity respecting headcount or capacity across objects and dicts."""
+        if hasattr(j, "headcount") and getattr(j, "headcount", None) is not None:
+            return getattr(j, "headcount")
+        if hasattr(j, "capacity") and getattr(j, "capacity", None) is not None:
+            return getattr(j, "capacity")
+        if hasattr(j, "get"):
+            val = j.get("headcount")
+            if val is not None:
+                return val
+            return j.get("capacity", 1)
+        return 1
+
     def build_network(
         self,
         candidates: list[Any],
@@ -84,9 +100,24 @@ class MarketplaceFlowNetwork:
 
         # Map candidates
         for c in candidates:
-            cid = c.candidate_id if hasattr(c, "candidate_id") else c["candidate_id"]
-            c_skills = set(c.skills if hasattr(c, "skills") else c.get("skills", []))
-            c_cap = c.capacity if hasattr(c, "capacity") else c.get("capacity", 1)
+            cid = getattr(c, "candidate_id", None)
+            if cid is None:
+                cid = getattr(c, "id", None)
+            if cid is None and hasattr(c, "get"):
+                cid = c.get("candidate_id", c.get("id"))
+            if cid is None:
+                cid = c["candidate_id"]
+
+            c_skills = set(
+                getattr(c, "skills", None)
+                or (c.get("skills") if hasattr(c, "get") else None)
+                or []
+            )
+            c_cap = getattr(c, "capacity", None)
+            if c_cap is None and hasattr(c, "get"):
+                c_cap = c.get("capacity", 1)
+            if c_cap is None:
+                c_cap = 1
 
             node_id = next_id
             next_id += 1
@@ -98,14 +129,28 @@ class MarketplaceFlowNetwork:
         # Map jobs
         job_map_obj: dict[Any, Any] = {}
         for j in jobs:
-            jid = j.job_id if hasattr(j, "job_id") else j["job_id"]
+            jid = getattr(j, "job_id", None)
+            if jid is None:
+                jid = getattr(j, "id", None)
+            if jid is None and hasattr(j, "get"):
+                jid = j.get("job_id", j.get("id"))
+            if jid is None:
+                jid = j["job_id"]
+
             j_skills = set(
-                j.required_skills
-                if hasattr(j, "required_skills")
-                else j.get("required_skills", [])
+                getattr(j, "required_skills", None)
+                or getattr(j, "skills", None)
+                or (j.get("required_skills") if hasattr(j, "get") else None)
+                or (j.get("skills") if hasattr(j, "get") else None)
+                or []
             )
-            job_cap = j.capacity if hasattr(j, "capacity") else j.get("capacity", 1)
-            j_cap = capacities.get(jid, job_cap) if capacities else job_cap
+            job_cap = self._resolve_job_capacity(j)
+            j_cap = job_cap
+            if capacities:
+                if jid in capacities:
+                    j_cap = capacities[jid]
+                elif str(jid) in capacities:
+                    j_cap = capacities[str(jid)]
 
             node_id = next_id
             next_id += 1
@@ -121,8 +166,13 @@ class MarketplaceFlowNetwork:
         # Edges from Jobs to Sink
         for jid, j_node_id in self.job_map.items():
             job = job_map_obj[jid]
-            job_cap = job.capacity if hasattr(job, "capacity") else job.get("capacity", 1)
-            j_cap = capacities.get(jid, job_cap) if capacities else job_cap
+            job_cap = self._resolve_job_capacity(job)
+            j_cap = job_cap
+            if capacities:
+                if jid in capacities:
+                    j_cap = capacities[jid]
+                elif str(jid) in capacities:
+                    j_cap = capacities[str(jid)]
             self.graph.add_edge(j_node_id, self.sink_id, capacity=float(j_cap))
 
         # Edges from Candidates to Jobs
@@ -146,6 +196,8 @@ class MarketplaceFlowNetwork:
                 if is_eligible:
                     self.graph.add_edge(c_node_id, j_node_id, capacity=1.0)
                     self.edge_scores[(c_node_id, j_node_id)] = score
+
+    build_flow_network = build_network
 
     def execute_allocation(
         self,

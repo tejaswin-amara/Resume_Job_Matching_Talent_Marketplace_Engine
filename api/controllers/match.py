@@ -1,3 +1,4 @@
+import asyncio
 from typing import Annotated
 from uuid import UUID
 
@@ -48,7 +49,8 @@ async def adhoc_match(
     job_skills = {js.skill.name for js in job.skills}
 
     matcher = HybridMatcher()
-    res = matcher.match(
+    res = await asyncio.to_thread(
+        matcher.match,
         cand_emb=cand.embedding,
         job_emb=job.embedding,
         cand_skills=cand_skills,

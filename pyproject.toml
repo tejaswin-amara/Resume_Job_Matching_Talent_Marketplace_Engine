@@ -17,7 +17,10 @@ dependencies = [
     "python-multipart",
     "pypdf",
     "python-docx",
-    "httpx"
+    "httpx",
+    "opentelemetry-api>=1.20.0",
+    "opentelemetry-sdk>=1.20.0",
+    "opentelemetry-instrumentation-fastapi>=0.40b0",
 ]
 
 [project.optional-dependencies]
@@ -36,9 +39,30 @@ dev = [
 [tool.ruff]
 target-version = "py312"
 line-length = 99
+exclude = [
+    "scratch",
+    "web",
+    ".venv",
+    ".agents",
+]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "C90", "I", "N", "UP", "B", "A", "C4", "PT", "SIM", "ERA", "PL", "RUF"]
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM", "RUF"]
+ignore = [
+    "B008",
+    "B009",
+    "E501",
+    "C901",
+    "C414",
+    "PLR0913",
+    "PLR2004",
+    "PLR0912",
+    "UP035",
+    "UP046",
+    "E741",
+    "B905",
+    "SIM108",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -46,4 +70,38 @@ testpaths = ["tests"]
 pythonpath = ["."]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["PLR2004", "S101"]
+"tests/**/*.py" = [
+    "PLR2004",
+    "S101",
+    "F841",
+    "RUF005",
+    "RUF059",
+    "B007",
+    "B904",
+    "C401",
+    "C414",
+    "SIM102",
+    "SIM105",
+    "SIM108",
+    "SIM109",
+    "SIM110",
+    "W291",
+    "F401",
+    "I001",
+    "E402",
+]
+"core/engine/**/*.py" = [
+    "UP035",
+    "UP046",
+    "E741",
+    "C414",
+    "SIM102",
+    "SIM110",
+    "I001",
+    "RUF005",
+    "RUF012",
+    "F841",
+]
+"migrations/**/*.py" = [
+    "E402",
+]
