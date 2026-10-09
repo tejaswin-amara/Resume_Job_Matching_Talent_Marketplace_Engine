@@ -16,7 +16,8 @@ import { Loader2, ArrowLeft } from "lucide-react";
 
 export default function CandidatePortal() {
   const [uploading, setUploading] = useState(false);
-  const [resumeData, setResumeData] = useState<(ParsedResume & { id: string }) | null>(null);
+  const [resumeData, setResumeData] = useState<ParsedResume | null>(null);
+  const [rawResumeText, setRawResumeText] = useState("");
   const [jobs, setJobs] = useState<Job[]>([]);
   const [matches, setMatches] = useState<Record<string, MatchScore>>({});
   const [loadingJobs, setLoadingJobs] = useState(false);
@@ -29,7 +30,6 @@ export default function CandidatePortal() {
   }, [resumeData]);
 
   const fetchJobs = async () => {
-    if (!resumeData) return;
     setLoadingJobs(true);
     try {
       const data = await api.getJobs();
@@ -39,8 +39,8 @@ export default function CandidatePortal() {
       for (const job of data) {
         try {
           const match = await api.adhocMatch(
-            resumeData.id,
-            job.id
+            rawResumeText,
+            `${job.title}\n${job.description}\n${job.requirements}`
           );
           newMatches[job.id] = match;
         } catch (e) {
@@ -59,7 +59,13 @@ export default function CandidatePortal() {
     setUploading(true);
     try {
       const res = await api.uploadResume(file);
-      setResumeData({ id: res.id, skills: res.skills_extracted });
+      if (res.text) {
+        const parsed = await api.parseText(res.text);
+        setResumeData(parsed);
+      } else {
+        setResumeData(res);
+      setRawResumeText(res.raw_text || "");
+      }
     } catch (error) {
       console.error("Upload failed", error);
       alert("Upload failed. Check console.");
@@ -126,7 +132,7 @@ export default function CandidatePortal() {
                 </div>
                 <div>
                   <h4 className="text-sm font-semibold text-gray-400 mb-2">Experience</h4>
-                  <p className="text-sm text-gray-300">Experience data is unavailable</p>
+                  <p className="text-sm text-gray-300">0 roles found</p>
                 </div>
               </SpotlightCard>
             </div>

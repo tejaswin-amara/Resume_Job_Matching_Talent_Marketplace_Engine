@@ -13,11 +13,6 @@ export interface Job {
   skills: string[];
 }
 
-export interface UploadedResume {
-  id: string;
-  skills_extracted: string[];
-}
-
 export interface ParsedResume {
   skills: string[];
   raw_text?: string;
@@ -37,7 +32,7 @@ export interface MatchScore {
 }
 
 export const api = {
-  uploadResume: async (file: File): Promise<UploadedResume> => {
+  uploadResume: async (file: File): Promise<any> => {
     const formData = new FormData();
     formData.append('file', file);
     const res = await fetch(`${API_BASE}/resumes/upload`, {
@@ -48,9 +43,11 @@ export const api = {
     return res.json();
   },
   parseText: async (text: string): Promise<ParsedResume> => {
-    const query = new URLSearchParams({ text });
-    const res = await fetch(`${API_BASE}/resumes/parse-text?${query}`, {
+    // FIXED: send text in body, not url param
+    const res = await fetch(`${API_BASE}/resumes/parse-text`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
     });
     if (!res.ok) throw new Error('Parsing failed');
     return res.json();
@@ -74,11 +71,11 @@ export const api = {
     if (!res.ok) throw new Error('Failed to fetch matches');
     return res.json();
   },
-  adhocMatch: async (candidate_id: string, job_id: string): Promise<MatchScore> => {
+  adhocMatch: async (resume_text: string, job_description: string): Promise<MatchScore> => {
     const res = await fetch(`${API_BASE}/match/adhoc`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ candidate_id, job_id }),
+      body: JSON.stringify({ resume_text, job_description }),
     });
     if (!res.ok) throw new Error('Adhoc match failed');
     return res.json();

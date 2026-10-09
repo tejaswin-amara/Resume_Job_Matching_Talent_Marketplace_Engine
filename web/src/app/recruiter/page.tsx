@@ -249,7 +249,7 @@ export default function RecruiterPortal() {
                       <div className="text-right">
                         <div className="text-2xl font-bold text-blue-400">
                           <CountUp
-                            to={Math.round(match.total_score)}
+                            to={Math.round(match.total_score * 100)}
                             suffix="%"
                           />
                         </div>

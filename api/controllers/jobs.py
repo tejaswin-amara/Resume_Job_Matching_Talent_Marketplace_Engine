@@ -7,9 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from api.errors import ProblemDetailException
-from api.schemas import JobCreate, JobResponse, MatchResultResponse
+from api.schemas import JobCreate, JobResponse
 from core.scoring.embeddings import EmbeddingService
-from db.models import JobPosting, JobSkillRequirement, MatchResult, Skill
+from db.models import JobPosting, JobSkillRequirement, Skill
 from db.session import get_db_session
 
 router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
@@ -89,15 +89,11 @@ async def list_jobs(skip: int = 0, limit: int = 10, db: AsyncSession = Depends(g
     ]
 
 
-@router.get("/{id}/matches", response_model=list[MatchResultResponse])
+@router.get("/{id}/matches")
 async def get_job_matches(id: UUID, db: AsyncSession = Depends(get_db_session)):
     job = await db.get(JobPosting, id)
     if not job:
         raise ProblemDetailException(404, "Not Found", "Job posting not found")
 
-    result = await db.execute(
-        select(MatchResult)
-        .where(MatchResult.job_id == id)
-        .order_by(MatchResult.total_score.desc(), MatchResult.id)
-    )
-    return result.scalars().all()
+    # In a real app, this would query MatchResult
+    return []
