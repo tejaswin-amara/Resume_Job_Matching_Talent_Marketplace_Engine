@@ -24,4 +24,3 @@ async def ready(db: AsyncSession = Depends(get_db_session)):
         return {"status": "ready"}
     except Exception as e:
         raise HTTPException(status_code=503, detail="Database unavailable") from e
-

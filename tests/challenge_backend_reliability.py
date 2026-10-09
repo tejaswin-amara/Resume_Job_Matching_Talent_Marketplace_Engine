@@ -122,7 +122,9 @@ class TestReadinessProbeVerification:
     async def test_ready_probe_returns_503_on_db_operational_error(self):
         """Simulate PostgreSQL down with OperationalError -> Must return HTTP 503."""
         mock_session = AsyncMock()
-        mock_session.execute.side_effect = OperationalError("SELECT 1", {}, Exception("Connection refused"))
+        mock_session.execute.side_effect = OperationalError(
+            "SELECT 1", {}, Exception("Connection refused")
+        )
 
         with pytest.raises(HTTPException) as exc_info:
             await ready(db=mock_session)
@@ -145,6 +147,7 @@ class TestReadinessProbeVerification:
     @pytest.mark.asyncio
     async def test_ready_probe_http_endpoint_503_via_client(self):
         """Test HTTP GET /health/ready through ASGI client with broken DB dependency."""
+
         async def mock_broken_db():
             mock_session = AsyncMock()
             mock_session.execute.side_effect = Exception("Cannot reach PostgreSQL")
@@ -234,7 +237,9 @@ class TestEventLoopNonBlockingStress:
         res = await asyncio.to_thread(cpu_dummy)
         assert res == "done"
         assert worker_thread_id is not None
-        assert worker_thread_id != main_thread_id, "asyncio.to_thread must run on separate worker thread"
+        assert worker_thread_id != main_thread_id, (
+            "asyncio.to_thread must run on separate worker thread"
+        )
 
     @pytest.mark.asyncio
     async def test_concurrent_event_loop_responsiveness_during_heavy_cpu_work(self):
@@ -286,11 +291,11 @@ class TestEventLoopNonBlockingStress:
         avg_probe_latency = sum(probe_latencies) / len(probe_latencies)
 
         assert max_probe_latency < 0.10, (
-            f"Event loop was starved! Max probe latency: {max_probe_latency*1000:.1f}ms "
-            f"(expected < 100ms during {blocking_cpu_duration*1000:.0f}ms CPU workload)"
+            f"Event loop was starved! Max probe latency: {max_probe_latency * 1000:.1f}ms "
+            f"(expected < 100ms during {blocking_cpu_duration * 1000:.0f}ms CPU workload)"
         )
         assert avg_probe_latency < 0.05, (
-            f"Average probe latency too high: {avg_probe_latency*1000:.1f}ms"
+            f"Average probe latency too high: {avg_probe_latency * 1000:.1f}ms"
         )
 
     @pytest.mark.asyncio
@@ -316,12 +321,14 @@ class TestEventLoopNonBlockingStress:
 
         async def mock_db():
             session = AsyncMock()
+
             async def mock_get(entity, entity_id, **kwargs):
                 if entity == Candidate:
                     return mock_cand
                 if entity == JobPosting:
                     return mock_job
                 return None
+
             session.get.side_effect = mock_get
             yield session
 
@@ -371,7 +378,11 @@ class TestDockerignoreVerification:
         assert p.is_file(), ".dockerignore must exist at repository root"
 
         content = p.read_text(encoding="utf-8")
-        lines = [line.strip() for line in content.splitlines() if line.strip() and not line.startswith("#")]
+        lines = [
+            line.strip()
+            for line in content.splitlines()
+            if line.strip() and not line.startswith("#")
+        ]
 
         required_patterns = [".git", ".venv", "node_modules", "scratch"]
         for pat in required_patterns:
@@ -418,6 +429,7 @@ class TestLiveDatabaseAndFailureSimulation:
     async def test_ready_probe_unreachable_database_returns_503(self):
         """Simulate real socket connection failure to dead DB port (127.0.0.1:59999) -> 503."""
         from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+
         dead_engine = create_async_engine(
             "postgresql+asyncpg://postgres:postgres@127.0.0.1:59999/talent_db",
             connect_args={"timeout": 1.0},
@@ -475,7 +487,7 @@ class TestLiveDatabaseAndFailureSimulation:
             # Verify all 10 probes finished quickly without being blocked
             assert len(probe_times) == 10
             for pt in probe_times:
-                assert pt < 0.20, f"Probe took too long during upload: {pt*1000:.1f}ms"
+                assert pt < 0.20, f"Probe took too long during upload: {pt * 1000:.1f}ms"
 
     @pytest.mark.asyncio
     async def test_job_creation_and_listing_serialization_fixed(self):

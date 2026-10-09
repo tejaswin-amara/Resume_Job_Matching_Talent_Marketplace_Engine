@@ -41,8 +41,17 @@ from db.models import (
 
 def is_docker_available() -> bool:
     try:
+        import docker
+        from testcontainers.core.container import DockerContainer
+
         client = docker.from_env()
         client.ping()
+        try:
+            with DockerContainer("alpine:latest").with_command("echo 1"):
+                pass
+        except Exception as e:
+            if "overlay" in str(e).lower() or "500 server error" in str(e).lower():
+                return False
         return True
     except Exception:
         return False
@@ -121,10 +130,12 @@ async def _seed_candidate_and_job(
     session.add(candidate)
     await session.flush()
 
-    session.add_all([
-        CandidateSkill(candidate_id=candidate.id, skill_id=py_skill.id),
-        CandidateSkill(candidate_id=candidate.id, skill_id=fa_skill.id),
-    ])
+    session.add_all(
+        [
+            CandidateSkill(candidate_id=candidate.id, skill_id=py_skill.id),
+            CandidateSkill(candidate_id=candidate.id, skill_id=fa_skill.id),
+        ]
+    )
 
     job_emb = [0.0] * 384
     job_emb[0] = 0.95
@@ -140,10 +151,12 @@ async def _seed_candidate_and_job(
     session.add(job)
     await session.flush()
 
-    session.add_all([
-        JobSkillRequirement(job_id=job.id, skill_id=py_skill.id, is_required=True),
-        JobSkillRequirement(job_id=job.id, skill_id=fa_skill.id, is_required=True),
-    ])
+    session.add_all(
+        [
+            JobSkillRequirement(job_id=job.id, skill_id=py_skill.id, is_required=True),
+            JobSkillRequirement(job_id=job.id, skill_id=fa_skill.id, is_required=True),
+        ]
+    )
     await session.commit()
     return candidate, job, py_skill, fa_skill
 
@@ -160,9 +173,7 @@ async def test_pgvector_and_hybrid_scoring_e2e(migrated_db):
             "SELECT id, 1 - (embedding <=> :job_vec) AS cosine_similarity "
             "FROM candidates WHERE id = :cid"
         )
-        result = await session.execute(
-            query, {"job_vec": vector_str, "cid": candidate.id}
-        )
+        result = await session.execute(query, {"job_vec": vector_str, "cid": candidate.id})
         row = result.fetchone()
         assert row is not None
         cosine_sim = float(row.cosine_similarity)

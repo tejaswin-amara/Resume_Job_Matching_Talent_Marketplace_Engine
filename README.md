@@ -18,7 +18,6 @@ A high-throughput, enterprise-grade talent marketplace and automated candidate m
 flowchart TD
     subgraph Frontend["Frontend Tier (Next.js 14 + React Bits)"]
         UI["Candidate & Recruiter Portals<br/>(SpotlightCard, ShinyText, AnimatedBadge)"]
-        API_PROXY["Next.js Serverless Route Handlers<br/>(/api/v1/*)"]
     end
 
     subgraph API["Backend API (FastAPI + Python 3.12)"]
@@ -38,31 +37,15 @@ flowchart TD
 
     subgraph Storage["Persistence Tier"]
         DB[(PostgreSQL 16 + pgvector)]
-        SESSIONS["SQLAlchemy 2.0 Async Session Pool<br/>(pool_pre_ping=True, pool_recycle=1800)"]
+        SESSIONS["SQLAlchemy 2.0 Async Session Pool<br/>(pool_pre_ping=True, pool_recycle=3600)"]
     end
 
-    UI --> API_PROXY
-    API_PROXY --> ROUTERS
+    UI --> ROUTERS
     ROUTERS --> TO_THREAD
     TO_THREAD --> Domain
     ROUTERS --> SESSIONS
     SESSIONS --> DB
 ```
-
----
-
-## 🧠 Algorithmic Core Modules (Zero-Library Constraint)
-
-The algorithmic core in `core/engine/` is built under a strict **Cardinal Constraint**: zero standard library imports from `collections`, `heapq`, `bisect`, `networkx`, `scipy`, `numpy`, or `pandas`. All primitives are implemented from foundational computer science principles.
-
-| Module | Subsystem | Algorithms & Data Structures | Time Complexity |
-|---|---|---|---|
-| **M1: Flow** | Capacity-Constrained Marketplace Allocation | Dinic's Blocking Flow, Edmonds-Karp BFS, Successive Shortest Path (SPFA) Min-Cost Max-Flow, Residual Min-Cut Analyzer | $O(V^2 E)$ / $O(F \cdot E \log V)$ |
-| **M2: DP** | Candidate Skill Density & Profile Alignment | Sum-Over-Subsets (SOS) DP using Yates' Technique, Wagner-Fischer / Damerau-Levenshtein Edit Distance, Bitmask TSP Tour Solver | $O(n 2^n)$ / $O(N \cdot M)$ |
-| **M3: String** | ATS Keyword Extraction & Document Parsing | Aho-Corasick Multi-Pattern Trie Automaton, Knuth-Morris-Pratt (KMP), Dual-Prime Rolling Hash Rabin-Karp, Prefix-Doubling Suffix Array & Kasai's LCP | $O(N + M + K)$ / $O(N \log^2 N)$ |
-| **M4: Approx** | Minimum Cost Competency Team Formation | Greedy Set Cover ($1 + \ln n$ approx), $0-1$ Knapsack FPTAS ($(1-\epsilon)$ approx), 2-Approximation Maximal Matching Vertex Cover | Polynomial-time approximations |
-| **M5: Randomised** | Parallel Scans & Stream Sampling | Algorithm R Reservoir Sampler, Carter-Wegman Universal Hash Family, Blelloch Work-Efficient Parallel Prefix Scan | $O(N)$ Work, $O(\log N)$ Span |
-| **M6: Structures** | Foundational Data Primitives | 4-ary (Quaternary) Min/Max Heap with FIFO Stability, Open-Chaining HashMap with Load Factor Resizing, Doubly-Linked Sentinels, Adjacency Graph with Residual Pointers | Amortized $O(1)$ / $O(\log_4 N)$ |
 
 ---
 
@@ -193,4 +176,3 @@ pnpm --dir web exec playwright test
 ## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
-

@@ -35,7 +35,7 @@ export default function RecruiterPortal() {
   const fetchJobs = async () => {
     try {
       const data = await api.getJobs();
-      setJobs(data.items);
+      setJobs(data);
     } catch (e) {
       console.error(e);
     } finally {
@@ -67,8 +67,9 @@ export default function RecruiterPortal() {
         title: newJob.title,
         department: newJob.department,
         description: newJob.description,
-        requirements: newJob.requirements.split("\n").filter(Boolean),
-        experienceRange: newJob.experienceRange,
+        requirements: newJob.requirements,
+        min_experience: parseInt(newJob.experienceRange) || 0,
+        headcount: 1,
         skills: newJob.skills
           .split(",")
           .map((s) => s.trim())
@@ -241,15 +242,14 @@ export default function RecruiterPortal() {
                     <div className="flex justify-between items-start mb-6">
                       <div>
                         <h3 className="text-lg font-semibold text-gray-100">
-                          {match.candidateName ||
-                            `Candidate ${match.candidateId.substring(0, 8)}`}
+                          {`Candidate ${match.candidate_id.substring(0, 8)}`}
                         </h3>
                         <p className="text-sm text-gray-400">Rank #{idx + 1}</p>
                       </div>
                       <div className="text-right">
                         <div className="text-2xl font-bold text-blue-400">
                           <CountUp
-                            to={Math.round(match.overallScore * 100)}
+                            to={Math.round(match.total_score * 100)}
                             suffix="%"
                           />
                         </div>
@@ -272,12 +272,12 @@ export default function RecruiterPortal() {
                           <div>
                             <div className="text-xs text-gray-500 mb-1">Matched Skills</div>
                             <div className="flex flex-wrap gap-1">
-                              {match.matchedSkills.map((s, i) => (
+                              {match.matched_skills.map((s, i) => (
                                 <AnimatedBadge key={i} variant="success">
                                   {s}
                                 </AnimatedBadge>
                               ))}
-                              {match.matchedSkills.length === 0 && (
+                              {match.matched_skills.length === 0 && (
                                 <span className="text-xs text-gray-600">None</span>
                               )}
                             </div>
@@ -285,12 +285,12 @@ export default function RecruiterPortal() {
                           <div>
                             <div className="text-xs text-gray-500 mb-1">Missing Skills</div>
                             <div className="flex flex-wrap gap-1">
-                              {match.skillGaps.map((s, i) => (
+                              {match.missing_skills.map((s, i) => (
                                 <AnimatedBadge key={i} variant="danger">
                                   {s}
                                 </AnimatedBadge>
                               ))}
-                              {match.skillGaps.length === 0 && (
+                              {match.missing_skills.length === 0 && (
                                 <span className="text-xs text-gray-600">None</span>
                               )}
                             </div>

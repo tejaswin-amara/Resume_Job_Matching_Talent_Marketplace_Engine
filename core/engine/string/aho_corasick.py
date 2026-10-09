@@ -113,7 +113,7 @@ class AhoCorasickAutomaton:
         for i, char in enumerate(text):
             key_char = char.lower() if self.ignore_case else char
             while curr is not None and key_char not in curr.transitions:
-                curr = curr.fail
+                curr = curr.fail  # type: ignore
 
             if curr is None:
                 curr = self._root

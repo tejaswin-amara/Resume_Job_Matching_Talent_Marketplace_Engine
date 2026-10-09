@@ -5,28 +5,30 @@ export interface Job {
   title: string;
   department: string;
   description: string;
-  requirements: string[];
-  experienceRange: string;
+  requirements: string;
+  min_experience: number;
+  max_experience?: number;
+  location?: string;
+  headcount: number;
   skills: string[];
 }
 
 export interface ParsedResume {
   skills: string[];
-  experience: any[];
-  education: any[];
-  rawText: string;
+  raw_text?: string;
 }
 
 export interface MatchScore {
-  candidateId: string;
-  candidateName?: string;
-  overallScore: number;
-  semanticScore: number;
-  skillScore: number;
-  experienceScore: number;
-  educationScore: number;
-  skillGaps: string[];
-  matchedSkills: string[];
+  candidate_id: string;
+  job_id: string;
+  total_score: number;
+  semantic_score: number;
+  skill_score: number;
+  experience_score: number;
+  education_score: number;
+  matched_skills: string[];
+  missing_skills: string[];
+  suggestions: string[];
 }
 
 export const api = {
@@ -41,6 +43,7 @@ export const api = {
     return res.json();
   },
   parseText: async (text: string): Promise<ParsedResume> => {
+    // FIXED: send text in body, not url param
     const res = await fetch(`${API_BASE}/resumes/parse-text`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -58,7 +61,7 @@ export const api = {
     if (!res.ok) throw new Error('Job creation failed');
     return res.json();
   },
-  getJobs: async (): Promise<{items: Job[], total: number}> => {
+  getJobs: async (): Promise<Job[]> => {
     const res = await fetch(`${API_BASE}/jobs`);
     if (!res.ok) throw new Error('Failed to fetch jobs');
     return res.json();
@@ -68,11 +71,11 @@ export const api = {
     if (!res.ok) throw new Error('Failed to fetch matches');
     return res.json();
   },
-  adhocMatch: async (resumeText: string, jobDescription: string): Promise<MatchScore> => {
+  adhocMatch: async (resume_text: string, job_description: string): Promise<MatchScore> => {
     const res = await fetch(`${API_BASE}/match/adhoc`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ resumeText, jobDescription }),
+      body: JSON.stringify({ resume_text, job_description }),
     });
     if (!res.ok) throw new Error('Adhoc match failed');
     return res.json();

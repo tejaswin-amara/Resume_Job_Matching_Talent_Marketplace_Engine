@@ -113,16 +113,8 @@ async def marketplace_match(req: RecruiterMatchRequest) -> RecruiterMatchRespons
 
     for candidate in SAMPLE_CANDIDATES:
         cand_skills_lower = {s.lower() for s in candidate["skills"]}
-        matched = [
-            req_skills_lower[k]
-            for k in req_skills_lower
-            if k in cand_skills_lower
-        ]
-        missing = [
-            req_skills_lower[k]
-            for k in req_skills_lower
-            if k not in cand_skills_lower
-        ]
+        matched = [req_skills_lower[k] for k in req_skills_lower if k in cand_skills_lower]
+        missing = [req_skills_lower[k] for k in req_skills_lower if k not in cand_skills_lower]
 
         total_req = max(len(req.required_skills), 1)
         skill_score = (len(matched) / total_req) * 100.0
@@ -283,7 +275,9 @@ async def bottlenecks(req: BottleneckRequest | None = None):
     return {
         "status": "success",
         "cut_capacity": cut_cap,
-        "saturated_edges": len(report.saturated_edges) if report.saturated_edges else len(alloc_res.assignments),
+        "saturated_edges": len(report.saturated_edges)
+        if report.saturated_edges
+        else len(alloc_res.assignments),
         "bottleneck_skills": bottleneck_skills,
         "unfilled_demand": unfilled_demand,
         "unutilized_supply": unutilized_supply,
