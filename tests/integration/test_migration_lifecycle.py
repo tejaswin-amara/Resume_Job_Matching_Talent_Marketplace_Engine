@@ -1,4 +1,4 @@
-import subprocess
+import asyncio
 
 import pytest
 from alembic import command
@@ -25,9 +25,8 @@ def is_docker_available() -> bool:
         try:
             with DockerContainer("alpine:latest").with_command("echo 1"):
                 pass
-        except Exception as e:
-            if "overlay" in str(e).lower() or "500 server error" in str(e).lower():
-                return False
+        except Exception:
+            return False
         return True
     except Exception:
         return False
@@ -35,7 +34,7 @@ def is_docker_available() -> bool:
 
 @pytest.mark.skipif(not is_docker_available(), reason="Docker daemon unavailable")
 @pytest.mark.asyncio
-async def test_migration_lifecycle_upgrade_downgrade_reupgrade():
+async def test_migration_lifecycle_upgrade_downgrade_reupgrade(monkeypatch):
     """Verify clean upgrade, downgrade, and re-upgrade without pre-installing pgvector."""
     with PostgresContainer("pgvector/pgvector:pg16") as postgres:
         # Override the database URL with the Testcontainers DB
@@ -43,9 +42,9 @@ async def test_migration_lifecycle_upgrade_downgrade_reupgrade():
 
         # 1. First Upgrade to Head
         alembic_cfg = Config("alembic.ini")
-        alembic_cfg.set_main_option("sqlalchemy.url", db_url.replace("+asyncpg", ""))
+        monkeypatch.setattr(settings, "database_url", db_url)
 
-        command.upgrade(alembic_cfg, "head")
+        await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
 
         engine = create_async_engine(db_url, poolclass=NullPool)
 
@@ -66,7 +65,7 @@ async def test_migration_lifecycle_upgrade_downgrade_reupgrade():
             assert ext_res.scalar() == "vector"
 
         # 3. Downgrade to Base
-        command.downgrade(alembic_cfg, "base")
+        await asyncio.to_thread(command.downgrade, alembic_cfg, "base")
 
         async with engine.begin() as conn:
             result = await conn.execute(
@@ -77,7 +76,7 @@ async def test_migration_lifecycle_upgrade_downgrade_reupgrade():
             assert result.scalar() is False
 
         # 4. Re-Upgrade to Head
-        command.upgrade(alembic_cfg, "head")
+        await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
 
         async with engine.begin() as conn:
             result = await conn.execute(

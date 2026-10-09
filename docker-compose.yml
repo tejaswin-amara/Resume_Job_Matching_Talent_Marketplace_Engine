@@ -36,6 +36,8 @@ services:
     image: node:20-alpine
     working_dir: /app
     command: npm run dev
+    environment:
+      BACKEND_URL: http://backend:8000
     volumes:
       - ./web:/app
     ports:

@@ -77,6 +77,9 @@ docker compose up --build -d
 - **Health Live Probe:** `http://localhost:8000/health/live`
 - **Health Ready Probe:** `http://localhost:8000/health/ready`
 
+The Compose web service sets `BACKEND_URL=http://backend:8000`. Next.js rewrites
+`/api/:path*` to `${BACKEND_URL}/api/:path*`, so `/api/v1/*` requests reach FastAPI.
+
 ### 2. Local Development Setup
 
 #### Backend (Python 3.12 + UV)
