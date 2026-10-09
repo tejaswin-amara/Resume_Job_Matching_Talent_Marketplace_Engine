@@ -1,11 +1,14 @@
 import asyncio
 import os
+from typing import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from api.config import settings
 
-DATABASE_URL = os.getenv("DATABASE_URL", settings.database_url).replace("@localhost:", "@127.0.0.1:")
+DATABASE_URL = os.getenv("DATABASE_URL", settings.database_url).replace(
+    "@localhost:", "@127.0.0.1:"
+)
 
 engine = create_async_engine(
     DATABASE_URL,
@@ -43,7 +46,7 @@ def get_sessionmaker() -> async_sessionmaker[AsyncSession]:
     return _engine_cache[loop]
 
 
-async def get_db_session() -> AsyncSession:
+async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     maker = get_sessionmaker()
     async with maker() as session:
         yield session

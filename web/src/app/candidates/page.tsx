@@ -17,6 +17,7 @@ import { Loader2, ArrowLeft } from "lucide-react";
 export default function CandidatePortal() {
   const [uploading, setUploading] = useState(false);
   const [resumeData, setResumeData] = useState<ParsedResume | null>(null);
+  const [rawResumeText, setRawResumeText] = useState("");
   const [jobs, setJobs] = useState<Job[]>([]);
   const [matches, setMatches] = useState<Record<string, MatchScore>>({});
   const [loadingJobs, setLoadingJobs] = useState(false);
@@ -25,20 +26,21 @@ export default function CandidatePortal() {
     if (resumeData) {
       fetchJobs();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resumeData]);
 
   const fetchJobs = async () => {
     setLoadingJobs(true);
     try {
       const data = await api.getJobs();
-      setJobs(data.items);
+      setJobs(data);
       // For each job, calculate adhoc match
       const newMatches: Record<string, MatchScore> = {};
-      for (const job of data.items) {
+      for (const job of data) {
         try {
           const match = await api.adhocMatch(
-            resumeData!.rawText,
-            `${job.title}\n${job.description}\n${job.requirements.join(", ")}`
+            rawResumeText,
+            `${job.title}\n${job.description}\n${job.requirements}`
           );
           newMatches[job.id] = match;
         } catch (e) {
@@ -62,6 +64,7 @@ export default function CandidatePortal() {
         setResumeData(parsed);
       } else {
         setResumeData(res);
+      setRawResumeText(res.raw_text || "");
       }
     } catch (error) {
       console.error("Upload failed", error);
@@ -129,7 +132,7 @@ export default function CandidatePortal() {
                 </div>
                 <div>
                   <h4 className="text-sm font-semibold text-gray-400 mb-2">Experience</h4>
-                  <p className="text-sm text-gray-300">{resumeData.experience.length} roles found</p>
+                  <p className="text-sm text-gray-300">0 roles found</p>
                 </div>
               </SpotlightCard>
             </div>
@@ -170,12 +173,12 @@ export default function CandidatePortal() {
                                   Skill Match
                                 </h4>
                                 <div className="flex flex-wrap gap-2">
-                                  {match.matchedSkills.map((s, i) => (
+                                  {match.matched_skills.map((s, i) => (
                                     <AnimatedBadge key={`m-${i}`} variant="success">
                                       {s}
                                     </AnimatedBadge>
                                   ))}
-                                  {match.skillGaps.map((s, i) => (
+                                  {match.missing_skills.map((s, i) => (
                                     <AnimatedBadge key={`g-${i}`} variant="danger">
                                       {s}
                                     </AnimatedBadge>

@@ -4,6 +4,7 @@ Revision ID: 20260930_0001
 Revises: None
 Create Date: 2026-09-30 15:30:00.000000
 """
+
 from collections.abc import Sequence
 
 import pgvector
@@ -22,6 +23,9 @@ def upgrade() -> None:
     op.execute("CREATE EXTENSION IF NOT EXISTS vector;")
 
     # 2. Skills table
+    op.create_index(
+        op.f("ix_job_postings_created_at"), "job_postings", ["created_at"], unique=False
+    )
     op.create_table(
         "skills",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
@@ -40,7 +44,7 @@ def upgrade() -> None:
         sa.Column("education_level", sa.String(), nullable=True),
         sa.Column("raw_text", sa.String(), nullable=False),
         sa.Column("embedding", pgvector.sqlalchemy.Vector(384), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, index=True),
     )
 
     # 4. CandidateSkills table
@@ -62,6 +66,7 @@ def upgrade() -> None:
     )
 
     # 5. JobPostings table
+    op.create_index(op.f("ix_candidates_created_at"), "candidates", ["created_at"], unique=False)
     op.create_table(
         "job_postings",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
@@ -74,7 +79,7 @@ def upgrade() -> None:
         sa.Column("location", sa.String(), nullable=True),
         sa.Column("headcount", sa.Integer(), server_default="1", nullable=False),
         sa.Column("embedding", pgvector.sqlalchemy.Vector(384), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, index=True),
     )
 
     # 6. JobSkillRequirements table
@@ -120,7 +125,7 @@ def upgrade() -> None:
         sa.Column("matched_skills", postgresql.JSONB(), server_default="[]", nullable=False),
         sa.Column("missing_skills", postgresql.JSONB(), server_default="[]", nullable=False),
         sa.Column("suggestions", postgresql.JSONB(), server_default="[]", nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
+        sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, index=True),
     )
 
 

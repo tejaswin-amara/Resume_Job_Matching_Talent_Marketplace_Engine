@@ -78,7 +78,7 @@ class MinCostMaxFlow:
 
             curr = sink
             while curr != source:
-                edge = parent_edge[curr]
+                edge = parent_edge[curr]  # type: ignore
                 assert edge is not None
                 bottleneck = min(bottleneck, edge.residual_capacity)
                 curr = edge.u
@@ -89,7 +89,7 @@ class MinCostMaxFlow:
             # Augment along the path
             curr = sink
             while curr != source:
-                edge = parent_edge[curr]
+                edge = parent_edge[curr]  # type: ignore
                 assert edge is not None
                 edge.augment(bottleneck)
                 curr = edge.u

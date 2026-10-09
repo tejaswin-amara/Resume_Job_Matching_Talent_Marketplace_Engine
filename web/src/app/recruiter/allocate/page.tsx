@@ -70,7 +70,7 @@ export default function MarketAllocation() {
             className="p-6 bg-blue-950/20 border-blue-900/60"
           >
             <Network className="w-8 h-8 text-blue-500 mb-2" />
-            <h3 className="text-lg font-bold text-blue-400 mb-2">Dinic's Flow Allocation</h3>
+            <h3 className="text-lg font-bold text-blue-400 mb-2">Dinic&apos;s Flow Allocation</h3>
             <p className="text-sm text-gray-400 mb-4">
               Optimizes maximum candidate-to-job assignments across the entire marketplace.
             </p>

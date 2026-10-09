@@ -51,7 +51,9 @@ class TestEmbeddingEdgeCases:
             ("null_byte", "\x00\x01\x02 binary bytes in string"),
             ("mixed", "Mixed 🚀 CJK 测试 Arabic مهندس and symbols @#$%^&*()_+"),
         ],
-        ids=lambda label_or_val: label_or_val if isinstance(label_or_val, str) and len(label_or_val) < 30 else ""
+        ids=lambda label_or_val: (
+            label_or_val if isinstance(label_or_val, str) and len(label_or_val) < 30 else ""
+        ),
     )
     def test_encode_norm_is_always_one(self, service, label, text):
         """Invariant: L2 norm of encoded vector must always equal 1.0."""
@@ -177,7 +179,9 @@ class TestFallbackExplicit:
 
     def test_fallback_deterministic_output(self, service):
         """_fallback_pseudo_embedding produces exact expected shape and norm."""
-        res = service._fallback_pseudo_email = service._fallback_pseudo_embedding("Python Developer", dim=384)
+        res = service._fallback_pseudo_email = service._fallback_pseudo_embedding(
+            "Python Developer", dim=384
+        )
         assert len(res) == 384
         assert abs(vector_norm(res) - 1.0) < 1e-5
 

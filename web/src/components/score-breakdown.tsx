@@ -5,11 +5,11 @@ import { AnimatedProgress, CountUp } from "@/components/reactbits";
 import { MatchScore } from "../lib/api";
 
 export function ScoreBreakdown({ score }: { score: MatchScore }) {
-  const overallPercent = Math.round(score.overallScore * 100);
-  const semanticPercent = Math.round(score.semanticScore * 100);
-  const skillPercent = Math.round(score.skillScore * 100);
-  const expPercent = Math.round(score.experienceScore * 100);
-  const eduPercent = Math.round(score.educationScore * 100);
+  const overallPercent = Math.round(score.total_score * 100);
+  const semanticPercent = Math.round(score.semantic_score * 100);
+  const skillPercent = Math.round(score.skill_score * 100);
+  const expPercent = Math.round(score.experience_score * 100);
+  const eduPercent = Math.round(score.education_score * 100);
 
   return (
     <div className="space-y-4">

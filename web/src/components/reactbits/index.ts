@@ -6,3 +6,4 @@ export * from "./CountUp";
 export * from "./AnimatedBadge";
 export * from "./AnimatedProgress";
 export * from "./FadeContent";
+export { UploadDropzone } from './UploadDropzone';
