@@ -93,6 +93,13 @@ class MarketplaceFlowNetwork:
     ) -> None:
         """Construct the flow network from candidates, jobs, and capacities."""
         self.graph = CustomAdjacencyGraph()
+        self.candidate_map = {}
+        self.candidate_rev_map = {}
+        self.job_map = {}
+        self.job_rev_map = {}
+        self.candidate_skills = {}
+        self.job_skills = {}
+        self.edge_scores = {}
         self.source_id = 0
         self.graph.add_node(self.source_id)
 

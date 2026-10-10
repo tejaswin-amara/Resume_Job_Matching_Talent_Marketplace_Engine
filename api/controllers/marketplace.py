@@ -1,11 +1,16 @@
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from core.engine.approx.greedy_set_cover import CandidateSkillProfile, GreedySetCover
 from core.engine.flow.marketplace_network import MarketplaceFlowNetwork
 from core.engine.flow.min_cut import MinCutAnalyzer
+from db.models import Candidate, CandidateSkill, JobPosting, JobSkillRequirement
+from db.session import get_db_session
 
 router = APIRouter(prefix="/api/v1/marketplace", tags=["marketplace"])
 
@@ -60,76 +65,49 @@ class RecruiterMatchResponse(BaseModel):
     matches: list[CandidateMatchItem]
 
 
-SAMPLE_CANDIDATES = [
-    {
-        "candidate_id": "cand-001",
-        "name": "Alex Mercer",
-        "skills": ["Python", "FastAPI", "PostgreSQL", "pgvector", "Docker", "React"],
-        "experience_years": 6,
-    },
-    {
-        "candidate_id": "cand-002",
-        "name": "Sarah Connor",
-        "skills": ["Python", "Django", "PostgreSQL", "AWS"],
-        "experience_years": 5,
-    },
-    {
-        "candidate_id": "cand-003",
-        "name": "David Bowman",
-        "skills": ["React", "TypeScript", "Next.js", "Tailwind CSS"],
-        "experience_years": 4,
-    },
-    {
-        "candidate_id": "cand-004",
-        "name": "Elena Rostova",
-        "skills": ["Python", "FastAPI", "React", "TypeScript", "PostgreSQL"],
-        "experience_years": 7,
-    },
-    {
-        "candidate_id": "cand-005",
-        "name": "Marcus Vance",
-        "skills": ["Python", "FastAPI", "Docker", "Kubernetes", "PostgreSQL"],
-        "experience_years": 8,
-    },
-    {
-        "candidate_id": "cand-006",
-        "name": "Chloe Sullivan",
-        "skills": ["React", "Vue", "CSS", "HTML", "JavaScript"],
-        "experience_years": 3,
-    },
-    {
-        "candidate_id": "cand-007",
-        "name": "Kenji Sato",
-        "skills": ["Python", "PostgreSQL", "C++", "Linux", "FastAPI"],
-        "experience_years": 4,
-    },
-]
-
-
 @router.post("/match", response_model=RecruiterMatchResponse)
-async def marketplace_match(req: RecruiterMatchRequest) -> RecruiterMatchResponse:
+async def marketplace_match(
+    req: RecruiterMatchRequest, db: AsyncSession = Depends(get_db_session)
+) -> RecruiterMatchResponse:
+    result = await db.execute(
+        select(Candidate).options(
+            selectinload(Candidate.skills).selectinload(CandidateSkill.skill)
+        )
+    )
+    candidates = result.scalars().all()
+    db_candidates = [
+        {
+            "candidate_id": str(c.id),
+            "name": c.name,
+            "skills": [s.skill.name for s in c.skills if s.skill],
+            "experience_years": c.total_experience_years,
+        }
+        for c in candidates
+    ]
     req_skills_lower = {s.lower(): s for s in req.required_skills}
     computed_matches: list[CandidateMatchItem] = []
 
-    for candidate in SAMPLE_CANDIDATES:
-        cand_skills_lower = {s.lower() for s in candidate["skills"]}
+    for candidate in db_candidates:
+        c_skills: list[str] = candidate.get("skills", [])  # type: ignore
+        c_exp: float = float(candidate.get("experience_years", 0.0))  # type: ignore
+        cand_skills_lower = {s.lower() for s in c_skills}
         matched = [req_skills_lower[k] for k in req_skills_lower if k in cand_skills_lower]
         missing = [req_skills_lower[k] for k in req_skills_lower if k not in cand_skills_lower]
 
         total_req = max(len(req.required_skills), 1)
         skill_score = (len(matched) / total_req) * 100.0
-        exp_ratio = candidate["experience_years"] / max(req.min_experience, 1)
+        exp_ratio = c_exp / max(req.min_experience, 1)
         exp_score = min(100.0, exp_ratio * 100.0)
         composite_score = round(0.70 * skill_score + 0.30 * exp_score, 1)
 
         computed_matches.append(
             CandidateMatchItem(
-                candidate_id=candidate["candidate_id"],
-                name=candidate["name"],
+                candidate_id=str(candidate["candidate_id"]),
+                name=str(candidate["name"]) if candidate.get("name") else None,
                 score=composite_score,
                 matched_skills=matched,
                 missing_skills=missing,
-                experience_years=candidate["experience_years"],
+                experience_years=int(c_exp),
             )
         )
 
@@ -144,35 +122,14 @@ async def marketplace_match(req: RecruiterMatchRequest) -> RecruiterMatchRespons
     )
 
 
-SAMPLE_JOBS = [
-    {
-        "job_id": "job-001",
-        "title": "Senior Backend Engineer",
-        "required_skills": ["Python", "FastAPI", "PostgreSQL"],
-        "headcount": 2,
-    },
-    {
-        "job_id": "job-002",
-        "title": "Frontend Engineer",
-        "required_skills": ["React", "TypeScript", "Next.js"],
-        "headcount": 1,
-    },
-    {
-        "job_id": "job-003",
-        "title": "DevOps / Platform Engineer",
-        "required_skills": ["Docker", "Kubernetes", "Linux"],
-        "headcount": 1,
-    },
-]
-
-
 def _get_job_capacity(job: dict[str, Any], capacities: dict[str, int] | None = None) -> int:
     jid = str(job.get("job_id", job.get("id", "")))
     if capacities:
         if jid in capacities:
             return capacities[jid]
-        if job.get("id") in capacities:
-            return capacities[job["id"]]
+        job_id_obj = job.get("id")
+        if job_id_obj is not None and str(job_id_obj) in capacities:
+            return capacities[str(job_id_obj)]
     val = job.get("headcount")
     if val is not None:
         return val
@@ -180,10 +137,46 @@ def _get_job_capacity(job: dict[str, Any], capacities: dict[str, int] | None = N
 
 
 @router.post("/allocate")
-async def allocate(req: AllocationRequest | None = None):
+async def allocate(
+    req: AllocationRequest | None = None, db: AsyncSession = Depends(get_db_session)
+):
     # Resolve input candidates and jobs
-    raw_candidates = (req.candidates if req and req.candidates else None) or SAMPLE_CANDIDATES
-    raw_jobs = (req.jobs if req and req.jobs else None) or SAMPLE_JOBS
+    if req and req.candidates:
+        raw_candidates = req.candidates
+    else:
+        result_c = await db.execute(
+            select(Candidate).options(
+                selectinload(Candidate.skills).selectinload(CandidateSkill.skill)
+            )
+        )
+        raw_candidates = [
+            {
+                "candidate_id": str(c.id),
+                "name": c.name,
+                "skills": [s.skill.name for s in c.skills if s.skill],
+                "experience_years": c.total_experience_years,
+            }
+            for c in result_c.scalars().all()
+        ]
+
+    if req and req.jobs:
+        raw_jobs = req.jobs
+    else:
+        result_j = await db.execute(
+            select(JobPosting).options(
+                selectinload(JobPosting.skills).selectinload(JobSkillRequirement.skill)
+            )
+        )
+        raw_jobs = [
+            {
+                "job_id": str(j.id),
+                "title": j.title,
+                "required_skills": [s.skill.name for s in j.skills if s.skill],
+                "headcount": j.headcount,
+                "min_experience": j.min_experience,
+            }
+            for j in result_j.scalars().all()
+        ]
     capacities = req.capacities if req and req.capacities else None
 
     # Support legacy bipartite_graph format if provided
@@ -208,7 +201,7 @@ async def allocate(req: AllocationRequest | None = None):
     assigned_cands = {a["candidate_id"] for a in assignments_data}
     filled_job_counts: dict[str, int] = {}
     for a in assignments_data:
-        filled_job_counts[a["job_id"]] = filled_job_counts.get(a["job_id"], 0) + 1
+        filled_job_counts[str(a["job_id"])] = filled_job_counts.get(str(a["job_id"]), 0) + 1
 
     unassigned_candidates = [
         str(c.get("candidate_id", c.get("id", "")))
@@ -233,9 +226,45 @@ async def allocate(req: AllocationRequest | None = None):
 
 
 @router.post("/bottlenecks")
-async def bottlenecks(req: BottleneckRequest | None = None):
-    raw_candidates = (req.candidates if req and req.candidates else None) or SAMPLE_CANDIDATES
-    raw_jobs = (req.jobs if req and req.jobs else None) or SAMPLE_JOBS
+async def bottlenecks(
+    req: BottleneckRequest | None = None, db: AsyncSession = Depends(get_db_session)
+):
+    if req and req.candidates:
+        raw_candidates = req.candidates
+    else:
+        result_c = await db.execute(
+            select(Candidate).options(
+                selectinload(Candidate.skills).selectinload(CandidateSkill.skill)
+            )
+        )
+        raw_candidates = [
+            {
+                "candidate_id": str(c.id),
+                "name": c.name,
+                "skills": [s.skill.name for s in c.skills if s.skill],
+                "experience_years": c.total_experience_years,
+            }
+            for c in result_c.scalars().all()
+        ]
+
+    if req and req.jobs:
+        raw_jobs = req.jobs
+    else:
+        result_j = await db.execute(
+            select(JobPosting).options(
+                selectinload(JobPosting.skills).selectinload(JobSkillRequirement.skill)
+            )
+        )
+        raw_jobs = [
+            {
+                "job_id": str(j.id),
+                "title": j.title,
+                "required_skills": [s.skill.name for s in j.skills if s.skill],
+                "headcount": j.headcount,
+                "min_experience": j.min_experience,
+            }
+            for j in result_j.scalars().all()
+        ]
     capacities = req.capacities if req and req.capacities else None
 
     net = MarketplaceFlowNetwork()
@@ -258,12 +287,11 @@ async def bottlenecks(req: BottleneckRequest | None = None):
     for a in alloc_res.assignments:
         filled_job_counts[str(a.job_id)] = filled_job_counts.get(str(a.job_id), 0) + 1
 
-    unfilled_demand = [
-        str(j.get("job_id", j.get("id", "")))
-        for j in raw_jobs
-        if filled_job_counts.get(str(j.get("job_id", j.get("id", ""))), 0)
-        < _get_job_capacity(j, capacities)
-    ]
+    unfilled_demand = []
+    for j in raw_jobs:
+        job_id_str = str(j.get("job_id", j.get("id", "")))
+        if filled_job_counts.get(job_id_str, 0) < int(_get_job_capacity(j, capacities)):
+            unfilled_demand.append(job_id_str)
     unutilized_supply = [
         str(c.get("candidate_id", c.get("id", "")))
         for c in raw_candidates
@@ -290,8 +318,26 @@ async def bottlenecks(req: BottleneckRequest | None = None):
 
 
 @router.post("/team-builder")
-async def team_builder(req: TeamBuilderRequest | None = None):
-    raw_candidates = (req.candidates if req and req.candidates else None) or SAMPLE_CANDIDATES
+async def team_builder(
+    req: TeamBuilderRequest | None = None, db: AsyncSession = Depends(get_db_session)
+):
+    if req and req.candidates:
+        raw_candidates = req.candidates
+    else:
+        result_c = await db.execute(
+            select(Candidate).options(
+                selectinload(Candidate.skills).selectinload(CandidateSkill.skill)
+            )
+        )
+        raw_candidates = [
+            {
+                "candidate_id": str(c.id),
+                "name": c.name,
+                "skills": [s.skill.name for s in c.skills if s.skill],
+                "experience_years": c.total_experience_years,
+            }
+            for c in result_c.scalars().all()
+        ]
     target_skills = (
         req.target_skills
         if req and req.target_skills is not None

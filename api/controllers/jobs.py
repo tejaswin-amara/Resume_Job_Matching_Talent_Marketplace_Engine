@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 from api.errors import ProblemDetailException
 from api.schemas import JobCreate, JobResponse
 from core.scoring.embeddings import EmbeddingService
-from db.models import JobPosting, JobSkillRequirement, Skill
+from db.models import JobPosting, JobSkillRequirement, MatchResult, Skill
 from db.session import get_db_session
 
 router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
@@ -95,5 +95,9 @@ async def get_job_matches(id: UUID, db: AsyncSession = Depends(get_db_session)):
     if not job:
         raise ProblemDetailException(404, "Not Found", "Job posting not found")
 
-    # In a real app, this would query MatchResult
-    return []
+    result = await db.execute(
+        select(MatchResult)
+        .where(MatchResult.job_id == id)
+        .order_by(MatchResult.total_score.desc())
+    )
+    return result.scalars().all()

@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv sync
+      - run: uv sync --extra dev
       - run: uv run ruff check .
       - run: uv run ruff format --check .
 
@@ -58,7 +58,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv sync
+      - run: uv sync --extra dev
       - name: Run Alembic Migrations
         run: uv run alembic upgrade head
       - name: Run Pytest Suites
@@ -83,6 +83,10 @@ jobs:
       - run: pnpm install --ignore-scripts
       - name: Run Vitest Component Tests
         run: pnpm run test
+      - name: Run TypeScript Compiler
+        run: pnpm exec tsc --noEmit
+      - name: Run Next.js Build
+        run: pnpm run build
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps chromium
       - name: Run Playwright E2E Tests

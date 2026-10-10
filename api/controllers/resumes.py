@@ -2,6 +2,7 @@ import asyncio
 import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,7 +18,9 @@ router = APIRouter(prefix="/api/v1/resumes", tags=["resumes"])
 @router.post("/upload")
 async def upload_resume(file: UploadFile = File(...), db: AsyncSession = Depends(get_db_session)):
     content = await file.read()
-    parser = ParserFactory.from_content_type(file.content_type, content)
+    parser = ParserFactory.from_content_type(
+        file.content_type or "application/octet-stream", content
+    )
 
     try:
         text = await asyncio.to_thread(parser.parse, content)
@@ -50,11 +53,15 @@ async def upload_resume(file: UploadFile = File(...), db: AsyncSession = Depends
         db.add(CandidateSkill(candidate_id=candidate.id, skill_id=skill.id))
 
     await db.commit()
-    return {"id": str(candidate.id), "skills_extracted": list(found_skills)}
+    return {"id": str(candidate.id), "skills": list(found_skills), "raw_text": text}
+
+
+class ParseTextRequest(BaseModel):
+    text: str
 
 
 @router.post("/parse-text")
-async def parse_text(text: str):
+async def parse_text(req: ParseTextRequest):
     extractor = SkillExtractor()
-    skills = await asyncio.to_thread(extractor.extract, text)
+    skills = await asyncio.to_thread(extractor.extract, req.text)
     return {"skills": list(skills)}

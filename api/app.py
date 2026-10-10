@@ -27,7 +27,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.add_exception_handler(ProblemDetailException, problem_detail_handler)
+app.add_exception_handler(ProblemDetailException, problem_detail_handler)  # type: ignore
 
 app.include_router(health.router)
 app.include_router(resumes.router)

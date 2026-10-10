@@ -47,13 +47,21 @@ class EmbeddingService:
         return self._l2_normalize(vec)
 
     def encode(self, text: str) -> list[float]:
+        import os
+
         if self.model is not None:
             embedding = self.model.encode(text, convert_to_tensor=False).tolist()
             return self._l2_normalize(embedding)
-        return self._fallback_pseudo_embedding(text)
+        if os.environ.get("ENVIRONMENT") == "test":
+            return self._fallback_pseudo_embedding(text)
+        raise RuntimeError("Embedding model is unavailable. Semantic scoring cannot proceed.")
 
     def encode_batch(self, texts: list[str]) -> list[list[float]]:
+        import os
+
         if self.model is not None:
             embeddings = self.model.encode(texts, convert_to_tensor=False).tolist()
             return [self._l2_normalize(emb) for emb in embeddings]
-        return [self._fallback_pseudo_embedding(t) for t in texts]
+        if os.environ.get("ENVIRONMENT") == "test":
+            return [self._fallback_pseudo_embedding(t) for t in texts]
+        raise RuntimeError("Embedding model is unavailable. Semantic scoring cannot proceed.")
