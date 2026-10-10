@@ -161,7 +161,7 @@ class TreeRerootingDP:
         argmin_node = min(range(len(latencies)), key=lambda i: latencies[i]) if latencies else 0
 
         return OrgBalanceReport(
-            centroid_node=argmin_node,
+            centroid_node=centroid,
             min_total_latency=min_latency,
             all_node_latencies=latencies,
             total_headcount=sum(headcounts) if headcounts else len(adj),

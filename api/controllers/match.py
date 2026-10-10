@@ -1,67 +1,60 @@
 import asyncio
-from typing import Annotated
-from uuid import UUID
+import uuid
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-from api.errors import ProblemDetailException
 from api.schemas import MatchResultResponse
+from core.scoring.embeddings import EmbeddingService
 from core.scoring.matcher import HybridMatcher
-from db.models import (
-    Candidate,
-    CandidateSkill,
-    JobPosting,
-    JobSkillRequirement,
-    MatchResult,
-)
-from db.session import get_db_session
+from core.scoring.skill_extractor import SkillExtractor
 
 router = APIRouter(prefix="/api/v1/match", tags=["match"])
 
+security = HTTPBearer()
+
+
+async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Dummy Firebase verification
+    if not credentials.credentials:
+        raise HTTPException(status_code=401, detail="Invalid auth credentials")
+    return credentials.credentials
+
 
 class AdhocMatchRequest(BaseModel):
-    candidate_id: UUID
-    job_id: UUID
+    resume_text: str
+    job_description: str
 
 
 @router.post("/adhoc", response_model=MatchResultResponse)
-async def adhoc_match(
-    req: AdhocMatchRequest, db: Annotated[AsyncSession, Depends(get_db_session)]
-):
-    cand = await db.get(
-        Candidate,
-        req.candidate_id,
-        options=[selectinload(Candidate.skills).selectinload(CandidateSkill.skill)],
-    )
-    job = await db.get(
-        JobPosting,
-        req.job_id,
-        options=[selectinload(JobPosting.skills).selectinload(JobSkillRequirement.skill)],
-    )
+async def adhoc_match(req: AdhocMatchRequest, token: str = Depends(verify_token)):
+    extractor = SkillExtractor()
+    cand_skills_list = await asyncio.to_thread(extractor.extract, req.resume_text)
+    job_skills_list = await asyncio.to_thread(extractor.extract, req.job_description)
 
-    if not cand or not job:
-        raise ProblemDetailException(404, "Not Found", "Candidate or Job not found")
+    cand_skills = set(cand_skills_list)
+    job_skills = set(job_skills_list)
 
-    cand_skills = {cs.skill.name for cs in cand.skills}
-    job_skills = {js.skill.name for js in job.skills}
+    emb_service = EmbeddingService()
+    cand_emb = await asyncio.to_thread(emb_service.encode, req.resume_text)
+    job_emb = await asyncio.to_thread(emb_service.encode, req.job_description)
 
     matcher = HybridMatcher()
     res = await asyncio.to_thread(
         matcher.match,
-        cand_emb=cand.embedding,
-        job_emb=job.embedding,
+        cand_emb=cand_emb,
+        job_emb=job_emb,
         cand_skills=cand_skills,
         job_skills=job_skills,
-        cand_exp=cand.total_experience_years,
-        job_min_exp=job.min_experience,
+        cand_exp=0.0,
+        job_min_exp=0.0,
     )
 
-    db_match = MatchResult(
-        candidate_id=cand.id,
-        job_id=job.id,
+    # Do not save to DB for adhoc match.
+    return MatchResultResponse(
+        candidate_id=uuid.uuid4(),
+        job_id=uuid.uuid4(),
         semantic_score=res.semantic_score,
         skill_score=res.skill_score,
         experience_score=res.experience_score,
@@ -71,8 +64,3 @@ async def adhoc_match(
         missing_skills=res.missing_skills,
         suggestions=res.suggestions,
     )
-    db.add(db_match)
-    await db.commit()
-    await db.refresh(db_match)
-
-    return db_match

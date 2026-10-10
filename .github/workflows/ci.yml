@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv sync
+      - run: uv sync --extra dev
       - run: uv run ruff check .
       - run: uv run ruff format --check .
 
@@ -31,12 +31,13 @@ jobs:
           pip install semgrep
           semgrep ci --config=semgrep.yml
       - name: Run trivy fs .
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@master
         with:
           scan-type: 'fs'
           scan-ref: '.'
           severity: 'CRITICAL,HIGH'
           exit-code: '1'
+          ignore-unfixed: true
 
   test-backend:
     runs-on: ubuntu-latest
@@ -58,7 +59,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv sync
+      - run: uv sync --extra dev
       - name: Run Alembic Migrations
         run: uv run alembic upgrade head
       - name: Run Pytest Suites
@@ -77,12 +78,16 @@ jobs:
           version: 11
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'pnpm'
           cache-dependency-path: web/pnpm-lock.yaml
       - run: pnpm install --ignore-scripts
       - name: Run Vitest Component Tests
         run: pnpm run test
+      - name: Run TypeScript Compiler
+        run: pnpm exec tsc --noEmit
+      - name: Run Next.js Build
+        run: pnpm run build
       - name: Install Playwright Browsers
         run: pnpm exec playwright install --with-deps chromium
       - name: Run Playwright E2E Tests

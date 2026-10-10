@@ -59,10 +59,14 @@ class HybridMatcher:
 
     def compute_education_score(self, cand_edu: str, job_req_edu: str) -> float:
         levels = {"high school": 1, "associate": 2, "bachelors": 3, "masters": 4, "phd": 5}
-        c_val = levels.get(cand_edu.lower(), 0)
-        j_val = levels.get(job_req_edu.lower(), 0)
+        c_val = levels.get(cand_edu.lower() if cand_edu else "", 0)
+        j_val = levels.get(job_req_edu.lower() if job_req_edu else "", 0)
         if j_val == 0:
+            # If job has no requirement, education is not a constraint
             return 1.0
+        if c_val == 0:
+            # If candidate education is unknown but job requires one, penalty
+            return 0.5
         if c_val >= j_val:
             return 1.0
         return max(0.0, 1.0 - (j_val - c_val) * 0.25)

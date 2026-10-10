@@ -1,4 +1,3 @@
-import asyncio
 import os
 from typing import AsyncGenerator
 
@@ -10,29 +9,14 @@ DATABASE_URL = os.getenv("DATABASE_URL", settings.database_url).replace(
     "@localhost:", "@127.0.0.1:"
 )
 
-engine = create_async_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
-    pool_recycle=3600,
-    pool_timeout=30.0,
-    echo=False,
-)
-async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-_engine_cache: dict[asyncio.AbstractEventLoop, async_sessionmaker[AsyncSession]] = {}
+_engine = None
+_session_maker = None
 
 
 def get_sessionmaker() -> async_sessionmaker[AsyncSession]:
-    global _engine_cache, async_session_maker
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        return async_session_maker
-
-    if loop not in _engine_cache:
-        eng = create_async_engine(
+    global _engine, _session_maker
+    if _engine is None:
+        _engine = create_async_engine(
             DATABASE_URL,
             pool_pre_ping=True,
             pool_size=10,
@@ -41,9 +25,15 @@ def get_sessionmaker() -> async_sessionmaker[AsyncSession]:
             pool_timeout=30.0,
             echo=False,
         )
-        _engine_cache[loop] = async_sessionmaker(eng, class_=AsyncSession, expire_on_commit=False)
+        _session_maker = async_sessionmaker(_engine, class_=AsyncSession, expire_on_commit=False)
+    return _session_maker
 
-    return _engine_cache[loop]
+
+async def close_db_engine():
+    global _engine
+    if _engine is not None:
+        await _engine.dispose()
+        _engine = None
 
 
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:

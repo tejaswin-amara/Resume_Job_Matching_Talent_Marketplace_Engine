@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { UploadDropzone } from "@/components/upload-dropzone";
+import { UploadDropzone } from "@/components/reactbits/UploadDropzone";
 import {
   SpotlightCard,
   AnimatedBadge,
