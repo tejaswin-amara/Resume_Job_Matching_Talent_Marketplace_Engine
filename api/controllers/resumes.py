@@ -2,6 +2,7 @@ import asyncio
 import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,9 +15,22 @@ from db.session import get_db_session
 
 router = APIRouter(prefix="/api/v1/resumes", tags=["resumes"])
 
+security = HTTPBearer()
+
+
+async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Dummy Firebase verification
+    if not credentials.credentials:
+        raise HTTPException(status_code=401, detail="Invalid auth credentials")
+    return credentials.credentials
+
 
 @router.post("/upload")
-async def upload_resume(file: UploadFile = File(...), db: AsyncSession = Depends(get_db_session)):
+async def upload_resume(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db_session),
+    token: str = Depends(verify_token),
+):
     content = await file.read()
     parser = ParserFactory.from_content_type(
         file.content_type or "application/octet-stream", content
@@ -33,9 +47,15 @@ async def upload_resume(file: UploadFile = File(...), db: AsyncSession = Depends
     extractor = SkillExtractor()
     found_skills = await asyncio.to_thread(extractor.extract, text)
 
+    import re
+
+    # Simple extraction heuristic for email
+    email_match = re.search(r"[\w\.-]+@[\w\.-]+\.\w+", text)
+    email = email_match.group(0) if email_match else f"unknown_{uuid.uuid4().hex[:8]}@example.com"
+
     candidate = Candidate(
         name=file.filename or "Unknown",
-        email=f"{uuid.uuid4()}@example.com",  # dummy for now
+        email=email,
         raw_text=text,
         embedding=embedding,
     )

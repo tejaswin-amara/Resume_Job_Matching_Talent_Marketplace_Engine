@@ -52,7 +52,9 @@ def test_health_endpoints_contract():
     if ready_res.status_code == 200:
         assert ready_res.json() == {"status": "ready"}
     else:
-        assert ready_res.json() == {"detail": "Database unavailable"}
+        j = ready_res.json()
+        assert j["detail"] == "Database unavailable"
+        assert "instance" in j
 
 
 health_schema = schema.include(path_regex=r"^/health/(live|ready)$")
@@ -83,13 +85,13 @@ def test_validation_error_rfc7807_contract():
     client = TestClient(app)
 
     # Empty payload to adhoc match
-    res = client.post("/api/v1/match/adhoc", json={})
+    res = client.post("/api/v1/match/adhoc", json={}, headers={"Authorization": "Bearer dummy_token"})
     assert res.status_code == 422
     data = res.json()
     assert "detail" in data
 
     # Invalid payload to create job
-    res_job = client.post("/api/v1/jobs", json={"title": 123})
+    res_job = client.post("/api/v1/jobs", json={"title": 123}, headers={"Authorization": "Bearer dummy_token"})
     assert res_job.status_code == 422
     data_job = res_job.json()
     assert "detail" in data_job

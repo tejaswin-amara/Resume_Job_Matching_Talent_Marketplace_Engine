@@ -1,7 +1,8 @@
 import asyncio
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -14,9 +15,22 @@ from db.session import get_db_session
 
 router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
 
+security = HTTPBearer()
+
+
+async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Dummy Firebase verification
+    if not credentials.credentials:
+        raise HTTPException(status_code=401, detail="Invalid auth credentials")
+    return credentials.credentials
+
 
 @router.post("", response_model=JobResponse)
-async def create_job(job_in: JobCreate, db: AsyncSession = Depends(get_db_session)):
+async def create_job(
+    job_in: JobCreate,
+    db: AsyncSession = Depends(get_db_session),
+    token: str = Depends(verify_token),
+):
     emb_service = EmbeddingService()
     text = f"{job_in.title} {job_in.description} {job_in.requirements}"
     embedding = await asyncio.to_thread(emb_service.encode, text)
@@ -62,7 +76,12 @@ async def create_job(job_in: JobCreate, db: AsyncSession = Depends(get_db_sessio
 
 
 @router.get("", response_model=list[JobResponse])
-async def list_jobs(skip: int = 0, limit: int = 10, db: AsyncSession = Depends(get_db_session)):
+async def list_jobs(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
+    db: AsyncSession = Depends(get_db_session),
+    token: str = Depends(verify_token),
+):
     query = (
         select(JobPosting)
         .options(selectinload(JobPosting.skills).selectinload(JobSkillRequirement.skill))
@@ -90,7 +109,9 @@ async def list_jobs(skip: int = 0, limit: int = 10, db: AsyncSession = Depends(g
 
 
 @router.get("/{id}/matches")
-async def get_job_matches(id: UUID, db: AsyncSession = Depends(get_db_session)):
+async def get_job_matches(
+    id: UUID, db: AsyncSession = Depends(get_db_session), token: str = Depends(verify_token)
+):
     job = await db.get(JobPosting, id)
     if not job:
         raise ProblemDetailException(404, "Not Found", "Job posting not found")

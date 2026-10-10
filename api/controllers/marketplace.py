@@ -1,6 +1,7 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +14,15 @@ from db.models import Candidate, CandidateSkill, JobPosting, JobSkillRequirement
 from db.session import get_db_session
 
 router = APIRouter(prefix="/api/v1/marketplace", tags=["marketplace"])
+
+security = HTTPBearer()
+
+
+async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Dummy Firebase verification
+    if not credentials.credentials:
+        raise HTTPException(status_code=401, detail="Invalid auth credentials")
+    return credentials.credentials
 
 
 class AllocationRequest(BaseModel):
@@ -187,6 +197,8 @@ async def allocate(
         capacities = bg.get("capacities", capacities)
 
     net = MarketplaceFlowNetwork()
+    # Objective: Maximize total number of valid assignments (Maximum Cardinality)
+    # Note: This does not optimize for maximum total score, only maximum filled positions.
     result = net.execute_allocation(raw_candidates, raw_jobs, capacities)
 
     assignments_data = [

@@ -1,7 +1,8 @@
 import asyncio
 import uuid
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
 from api.schemas import MatchResultResponse
@@ -11,6 +12,15 @@ from core.scoring.skill_extractor import SkillExtractor
 
 router = APIRouter(prefix="/api/v1/match", tags=["match"])
 
+security = HTTPBearer()
+
+
+async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    # Dummy Firebase verification
+    if not credentials.credentials:
+        raise HTTPException(status_code=401, detail="Invalid auth credentials")
+    return credentials.credentials
+
 
 class AdhocMatchRequest(BaseModel):
     resume_text: str
@@ -18,7 +28,7 @@ class AdhocMatchRequest(BaseModel):
 
 
 @router.post("/adhoc", response_model=MatchResultResponse)
-async def adhoc_match(req: AdhocMatchRequest):
+async def adhoc_match(req: AdhocMatchRequest, token: str = Depends(verify_token)):
     extractor = SkillExtractor()
     cand_skills_list = await asyncio.to_thread(extractor.extract, req.resume_text)
     job_skills_list = await asyncio.to_thread(extractor.extract, req.job_description)
