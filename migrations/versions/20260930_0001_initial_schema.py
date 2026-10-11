@@ -43,8 +43,6 @@ def upgrade() -> None:
         sa.Column("embedding", pgvector.sqlalchemy.Vector(384), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, index=True),
     )
-    op.create_index(op.f("ix_candidates_created_at"), "candidates", ["created_at"], unique=False)
-
     # 4. CandidateSkills table
     op.create_table(
         "candidate_skills",
@@ -78,10 +76,6 @@ def upgrade() -> None:
         sa.Column("embedding", pgvector.sqlalchemy.Vector(384), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, index=True),
     )
-    op.create_index(
-        op.f("ix_job_postings_created_at"), "job_postings", ["created_at"], unique=False
-    )
-
     # 6. JobSkillRequirements table
     op.create_table(
         "job_skill_requirements",

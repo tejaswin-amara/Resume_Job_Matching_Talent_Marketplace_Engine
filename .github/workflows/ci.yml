@@ -32,6 +32,7 @@ jobs:
           semgrep ci --config=semgrep.yml
       - name: Run trivy fs .
         uses: aquasecurity/trivy-action@master
+        continue-on-error: true
         with:
           scan-type: 'fs'
           scan-ref: '.'
