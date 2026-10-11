@@ -2,11 +2,11 @@ import asyncio
 import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.auth import verify_token
 from core.parsers.factory import ParserFactory
 from core.scoring.embeddings import EmbeddingService
 from core.scoring.skill_extractor import SkillExtractor
@@ -14,15 +14,6 @@ from db.models import Candidate, CandidateSkill, Skill
 from db.session import get_db_session
 
 router = APIRouter(prefix="/api/v1/resumes", tags=["resumes"])
-
-security = HTTPBearer()
-
-
-async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    # Dummy Firebase verification
-    if not credentials.credentials:
-        raise HTTPException(status_code=401, detail="Invalid auth credentials")
-    return credentials.credentials
 
 
 @router.post("/upload")

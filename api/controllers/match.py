@@ -1,25 +1,16 @@
 import asyncio
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from api.auth import verify_token
 from api.schemas import MatchResultResponse
 from core.scoring.embeddings import EmbeddingService
 from core.scoring.matcher import HybridMatcher
 from core.scoring.skill_extractor import SkillExtractor
 
 router = APIRouter(prefix="/api/v1/match", tags=["match"])
-
-security = HTTPBearer()
-
-
-async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    # Dummy Firebase verification
-    if not credentials.credentials:
-        raise HTTPException(status_code=401, detail="Invalid auth credentials")
-    return credentials.credentials
 
 
 class AdhocMatchRequest(BaseModel):

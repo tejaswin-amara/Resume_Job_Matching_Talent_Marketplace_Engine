@@ -60,3 +60,7 @@ logs/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# Scratch & Temporary
+scratch/
+.tempmediaStorage/

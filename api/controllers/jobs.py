@@ -1,12 +1,12 @@
 import asyncio
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from api.auth import verify_token
 from api.errors import ProblemDetailException
 from api.schemas import JobCreate, JobResponse
 from core.scoring.embeddings import EmbeddingService
@@ -14,15 +14,6 @@ from db.models import JobPosting, JobSkillRequirement, MatchResult, Skill
 from db.session import get_db_session
 
 router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
-
-security = HTTPBearer()
-
-
-async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    # Dummy Firebase verification
-    if not credentials.credentials:
-        raise HTTPException(status_code=401, detail="Invalid auth credentials")
-    return credentials.credentials
 
 
 @router.post("", response_model=JobResponse)
