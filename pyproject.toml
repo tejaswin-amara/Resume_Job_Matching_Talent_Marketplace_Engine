@@ -30,6 +30,7 @@ dev = [
     "pytest-cov",
     "ruff",
     "mypy",
+    "types-docker>=7.1.0",
     "schemathesis>=4.0.0",
     "testcontainers[postgres]>=4.0.0",
     "locust>=2.24.0",
@@ -105,3 +106,24 @@ pythonpath = ["."]
 "migrations/**/*.py" = [
     "E402",
 ]
+
+[tool.mypy]
+python_version = "3.12"
+explicit_package_bases = true
+exclude = [
+    "^scratch/",
+    "^web/",
+    "^\\.venv/",
+]
+warn_unused_configs = true
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "sentence_transformers.*",
+    "pgvector.*",
+    "docx.*",
+    "pypdf.*",
+]
+ignore_missing_imports = true
+

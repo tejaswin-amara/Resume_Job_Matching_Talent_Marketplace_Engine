@@ -7,9 +7,9 @@ Create Date: 2026-09-30 15:30:00.000000
 
 from collections.abc import Sequence
 
-import pgvector
 import sqlalchemy as sa
 from alembic import op
+from pgvector.sqlalchemy import Vector
 from sqlalchemy.dialects import postgresql
 
 revision: str = "20260930_0001"
@@ -40,7 +40,7 @@ def upgrade() -> None:
         sa.Column("total_experience_years", sa.Float(), server_default="0.0", nullable=False),
         sa.Column("education_level", sa.String(), nullable=True),
         sa.Column("raw_text", sa.String(), nullable=False),
-        sa.Column("embedding", pgvector.sqlalchemy.Vector(384), nullable=True),
+        sa.Column("embedding", Vector(384), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, index=True),
     )
     # 4. CandidateSkills table
@@ -73,7 +73,7 @@ def upgrade() -> None:
         sa.Column("max_experience", sa.Float(), nullable=True),
         sa.Column("location", sa.String(), nullable=True),
         sa.Column("headcount", sa.Integer(), server_default="1", nullable=False),
-        sa.Column("embedding", pgvector.sqlalchemy.Vector(384), nullable=True),
+        sa.Column("embedding", Vector(384), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, index=True),
     )
     # 6. JobSkillRequirements table

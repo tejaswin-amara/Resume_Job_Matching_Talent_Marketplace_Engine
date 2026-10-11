@@ -38,7 +38,7 @@ class TestF01CustomDataStructures:
         try:
             from core.engine.structures.array_list import CustomArrayList
 
-            arr = CustomArrayList()
+            arr: CustomArrayList[int] = CustomArrayList()
             for i in range(100):
                 arr.append(i * 10)
             assert arr.size() == 100
@@ -65,7 +65,7 @@ class TestF01CustomDataStructures:
         try:
             from core.engine.structures.linked_list import CustomLinkedList
 
-            ll = CustomLinkedList()
+            ll: CustomLinkedList[int] = CustomLinkedList()
             ll.append(10)
             ll.append_left(5)
             assert ll.size() == 2
@@ -80,7 +80,7 @@ class TestF01CustomDataStructures:
         try:
             from core.engine.structures.hash_map import CustomHashMap
 
-            hmap = CustomHashMap()
+            hmap: CustomHashMap[str, int] = CustomHashMap()
             hmap.put("python", 100)
             hmap.put("fastapi", 200)
             assert hmap.get("python") == 100
@@ -96,7 +96,7 @@ class TestF01CustomDataStructures:
         try:
             from core.engine.structures.priority_queue import CustomPriorityQueue
 
-            pq = CustomPriorityQueue()
+            pq: CustomPriorityQueue[str] = CustomPriorityQueue()
             for val in [50, 20, 80, 10, 30]:
                 pq.push(val, f"item_{val}")
             pri, item = pq.pop()

@@ -10,8 +10,12 @@ except Exception:
     _TORCH_AVAILABLE = False
 
 
+from typing import Any
+
+
 class EmbeddingService:
     _instance = None
+    model: Any = None
 
     def __new__(cls):
         if cls._instance is None:
@@ -20,6 +24,7 @@ class EmbeddingService:
         return cls._instance
 
     def _init_model(self):
+        self.model = None
         if _TORCH_AVAILABLE:
             try:
                 device = "cuda" if torch.cuda.is_available() else "cpu"

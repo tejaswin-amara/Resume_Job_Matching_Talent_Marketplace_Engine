@@ -229,9 +229,11 @@ class TestStructuresScaleStress:
             fifo_pq.push(42.0, f"item_{i}")
 
         for i in range(1_000):
-            prio, item = fifo_pq.pop()
-            assert prio == 42.0
-            assert item == f"item_{i}", f"FIFO stability broken: expected item_{i}, got {item}"
+            fifo_prio, fifo_item = fifo_pq.pop()
+            assert fifo_prio == 42.0
+            assert fifo_item == f"item_{i}", (
+                f"FIFO stability broken: expected item_{i}, got {fifo_item}"
+            )
 
 
 class TestStringAlgorithmsStress:

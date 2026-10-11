@@ -332,7 +332,7 @@ def _bfs_all_distances_oracle(
 def test_tree_rerooting_path_graph():
     """Verify TreeRerootingDP on path graph N=20 against closed-form and BFS oracle."""
     n = 20
-    adj = [[] for _ in range(n)]
+    adj: list[list[int]] = [[] for _ in range(n)]
     for i in range(n - 1):
         adj[i].append(i + 1)
         adj[i + 1].append(i)
@@ -349,7 +349,7 @@ def test_tree_rerooting_path_graph():
 def test_tree_rerooting_star_graph():
     """Verify TreeRerootingDP on star graph N=30: center must have min latency and be centroid."""
     n = 30
-    adj = [[] for _ in range(n)]
+    adj: list[list[int]] = [[] for _ in range(n)]
     for i in range(1, n):
         adj[0].append(i)
         adj[i].append(0)
@@ -369,7 +369,7 @@ def test_tree_rerooting_star_graph():
 def test_tree_rerooting_balanced_tree_and_weights():
     """Verify TreeRerootingDP on balanced binary tree N=31 with non-uniform headcounts."""
     n = 31
-    adj = [[] for _ in range(n)]
+    adj: list[list[int]] = [[] for _ in range(n)]
     for i in range(n):
         left, right = 2 * i + 1, 2 * i + 2
         if left < n:
@@ -629,7 +629,7 @@ def test_reservoir_sampler_boundary_conditions():
     assert sorted(sample_exact) == [10, 20, 30]
 
     # Empty stream
-    sample_empty = ReservoirSampler.sample_stream([], k=5)
+    sample_empty: list[int] = ReservoirSampler.sample_stream([], k=5)
     assert sample_empty == []
 
     # Invalid k

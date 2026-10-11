@@ -189,7 +189,7 @@ class ReferenceContractEngine:
     ) -> dict[str, Any]:
         """Reference Greedy Set Cover algorithm for minimal team competency formation."""
         uncovered = set(s.lower() for s in target_skills)
-        selected_candidates = []
+        selected_candidates: list[dict[str, Any]] = []
 
         pool = [
             {
@@ -243,7 +243,7 @@ class E2ETestClient:
             self._live_client = httpx.Client(base_url=self.base_url, timeout=10.0)
         else:
             try:
-                from api.main import app
+                from api.app import app
                 from starlette.testclient import TestClient
 
                 self._test_client = TestClient(app)
@@ -444,7 +444,7 @@ class E2ETestClient:
         job_override: dict[str, Any] | None = None,
     ) -> E2EResponse:
         """Calls POST /api/v1/match/adhoc."""
-        payload = {
+        payload: dict[str, Any] = {
             "resume_text": resume_text,
             "job_description": job_description,
         }

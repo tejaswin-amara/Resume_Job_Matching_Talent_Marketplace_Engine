@@ -13,7 +13,7 @@ class BitmaskTSP:
     @classmethod
     def find_optimal_tour(
         cls,
-        cost_matrix: list[list[float]],
+        cost_matrix: list[list[float]] | list[list[int]],
         start_node: int = 0,
     ) -> tuple[float, list[int]]:
         """Find the minimum-cost closed tour starting and ending at start_node visiting all nodes.
@@ -84,7 +84,7 @@ class BitmaskTSP:
     @classmethod
     def find_optimal_path(
         cls,
-        cost_matrix: list[list[float]],
+        cost_matrix: list[list[float]] | list[list[int]],
         start_node: int = 0,
     ) -> tuple[float, list[int]]:
         """Find the minimum-cost open Hamiltonian path visiting every node without returning."""

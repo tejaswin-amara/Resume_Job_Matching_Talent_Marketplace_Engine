@@ -191,7 +191,7 @@ class TestCPURoutesASTInspection:
                         calls.append(f"{arg0.attr}")
                     elif isinstance(arg0, ast.Name):
                         calls.append(f"{arg0.id}")
-                    else:
+                    elif arg0 is not None:
                         calls.append(ast.unparse(arg0))
         return calls
 

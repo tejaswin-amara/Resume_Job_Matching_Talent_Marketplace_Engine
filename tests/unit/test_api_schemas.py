@@ -13,7 +13,7 @@ def test_job_creation_schema_validates():
 
 def test_job_creation_schema_rejects_missing_title():
     with pytest.raises(ValidationError):
-        JobCreate(description="Desc", requirements="Req")
+        JobCreate(description="Desc", requirements="Req")  # type: ignore[call-arg]
 
 
 def test_match_result_schema_serializes_correctly():

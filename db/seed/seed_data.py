@@ -1,10 +1,11 @@
 import asyncio
+from typing import Any
 
 from core.engine.string.aho_corasick import AhoCorasickAutomaton
 from db.models import Candidate, CandidateSkill, JobPosting, JobSkillRequirement, Skill
 from db.session import get_sessionmaker
 
-SKILLS = [
+SKILLS: list[str] = [
     "python",
     "java",
     "c++",
@@ -35,7 +36,7 @@ SKILLS = [
     "rabbitmq",
 ]
 
-JOBS = [
+JOBS: list[dict[str, Any]] = [
     {
         "title": "Senior Python Backend Engineer",
         "desc": "Looking for 5+ years exp in Python, FastAPI, PostgreSQL, Docker.",
@@ -98,7 +99,7 @@ JOBS = [
     },
 ]
 
-CANDIDATES = [
+CANDIDATES: list[dict[str, Any]] = [
     {
         "name": "Alice Smith",
         "email": "alice@example.com",
@@ -194,7 +195,8 @@ CANDIDATES = [
 
 async def seed():
 
-    async with get_sessionmaker() as session:
+    session_maker = get_sessionmaker()
+    async with session_maker() as session:
         # Create skills
         skill_objs = {}
         for s in SKILLS:
@@ -237,8 +239,8 @@ async def seed():
             session.add(cand)
             await session.flush()
 
-            matches = automaton.search(c["text"].lower())
-            found_skills = {match[1] for match in matches}
+            matches = automaton.find_all(str(c["text"]).lower())
+            found_skills = {match.word for match in matches}
             for s in found_skills:
                 if s in skill_objs:
                     session.add(CandidateSkill(candidate_id=cand.id, skill_id=skill_objs[s].id))

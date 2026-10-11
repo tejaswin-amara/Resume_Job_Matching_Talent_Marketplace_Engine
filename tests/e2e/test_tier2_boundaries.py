@@ -296,7 +296,7 @@ class TestTier2FlowAndMarketplaceBoundaries:
             candidates, jobs, capacities={"201": 2}
         )
         assert res["total_matches"] == 2
-        cand_caps = {c["id"]: 1 for c in candidates}
+        cand_caps = {int(str(c["id"])): 1 for c in candidates}
         assert_flow_conservation(res["assignments"], cand_caps, {201: 2})
 
 
