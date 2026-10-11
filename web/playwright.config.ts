@@ -17,5 +17,14 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'reduced-motion',
+      use: {
+        ...devices['Desktop Chrome'],
+        contextOptions: {
+          reducedMotion: 'reduce',
+        },
+      },
+    },
   ],
 });
