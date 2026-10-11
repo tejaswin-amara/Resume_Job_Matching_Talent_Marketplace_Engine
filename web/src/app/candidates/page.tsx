@@ -63,12 +63,15 @@ export default function CandidatePortal() {
         const parsed = await api.parseText(res.text);
         setResumeData(parsed);
       } else {
-        setResumeData(res);
-      setRawResumeText(res.raw_text || "");
+        setResumeData({
+          skills: res.skills || res.parsed_skills || res.skills_extracted || [],
+          raw_text: res.raw_text || "",
+        });
+        setRawResumeText(res.raw_text || "");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Upload failed", error);
-      alert("Upload failed. Check console.");
+      alert(error?.message || "Upload failed. Please check the file format.");
     } finally {
       setUploading(false);
     }
