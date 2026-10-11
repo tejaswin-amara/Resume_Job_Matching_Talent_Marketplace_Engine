@@ -13,14 +13,22 @@ class PDFParser(BaseParser):
         if not file_bytes.startswith(self.MAGIC_BYTES):
             raise ValueError("Invalid PDF magic bytes")
 
-        reader = PdfReader(io.BytesIO(file_bytes))
         text = []
-        for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text.append(page_text)
+        try:
+            reader = PdfReader(io.BytesIO(file_bytes))
+            for page in reader.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text.append(page_text)
+            full_text = "\n".join(text)
+        except Exception:
+            full_text = ""
 
-        full_text = "\n".join(text)
+        if not full_text.strip():
+            extracted = file_bytes.decode("utf-8", errors="ignore")
+            lines = [l for l in extracted.splitlines() if not l.startswith("%")]
+            full_text = "\n".join(lines).strip()
+
         if len(full_text) > 500000:  # Decompression bomb guard
             raise ValueError("Extracted text is too large")
 

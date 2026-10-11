@@ -21,10 +21,17 @@ from db.models import Base
 
 target_metadata = Base.metadata
 
-# Set sqlalchemy.url from our application settings so it doesn't need to be hardcoded in alembic.ini
+# Set sqlalchemy.url from configuration or application settings
 from api.config import settings
 
-config.set_main_option("sqlalchemy.url", settings.database_url)
+current_url = config.get_main_option("sqlalchemy.url")
+if not current_url or current_url.startswith("driver://"):
+    current_url = settings.database_url
+
+if current_url.startswith("postgresql://"):
+    current_url = current_url.replace("postgresql://", "postgresql+asyncpg://")
+
+config.set_main_option("sqlalchemy.url", current_url)
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

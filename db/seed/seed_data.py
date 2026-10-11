@@ -1,6 +1,8 @@
 import asyncio
 from typing import Any
 
+from sqlalchemy import select
+
 from core.engine.string.aho_corasick import AhoCorasickAutomaton
 from db.models import Candidate, CandidateSkill, JobPosting, JobSkillRequirement, Skill
 from db.session import get_sessionmaker
@@ -194,15 +196,17 @@ CANDIDATES: list[dict[str, Any]] = [
 
 
 async def seed():
-
     session_maker = get_sessionmaker()
     async with session_maker() as session:
-        # Create skills
-        skill_objs = {}
+        # Fetch existing skills and create missing ones
+        result = await session.execute(select(Skill))
+        existing_skills = {s.name: s for s in result.scalars().all()}
+        skill_objs = dict(existing_skills)
         for s in SKILLS:
-            skill = Skill(name=s, category="Tech")
-            session.add(skill)
-            skill_objs[s] = skill
+            if s not in skill_objs:
+                skill = Skill(name=s, category="Tech")
+                session.add(skill)
+                skill_objs[s] = skill
         await session.commit()
 
         # Extractor
@@ -211,8 +215,14 @@ async def seed():
             automaton.add_word(s)
         automaton.build()
 
+        # Fetch existing jobs by title
+        job_result = await session.execute(select(JobPosting.title))
+        existing_jobs = set(job_result.scalars().all())
+
         # Create jobs
         for j in JOBS:
+            if j["title"] in existing_jobs:
+                continue
             job = JobPosting(
                 title=j["title"],
                 description=j["desc"],
@@ -227,8 +237,14 @@ async def seed():
                 if s in skill_objs:
                     session.add(JobSkillRequirement(job_id=job.id, skill_id=skill_objs[s].id))
 
+        # Fetch existing candidates by email
+        cand_result = await session.execute(select(Candidate.email))
+        existing_candidates = set(cand_result.scalars().all())
+
         # Create candidates
         for c in CANDIDATES:
+            if c["email"] in existing_candidates:
+                continue
             cand = Candidate(
                 name=c["name"],
                 email=c["email"],

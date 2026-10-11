@@ -341,7 +341,11 @@ class TestEventLoopNonBlockingStress:
                 async def hit_match():
                     return await client.post(
                         "/api/v1/match/adhoc",
-                        json={"candidate_id": str(cand_id), "job_id": str(job_id)},
+                        json={
+                            "resume_text": "Experienced Python developer with FastAPI and PostgreSQL.",
+                            "job_description": "Seeking Python engineer with FastAPI experience.",
+                        },
+                        headers={"Authorization": "Bearer test-token"},
                     )
 
                 async def hit_live():
@@ -466,7 +470,11 @@ class TestLiveDatabaseAndFailureSimulation:
             probe_times = []
 
             async def do_upload():
-                return await client.post("/api/v1/resumes/upload", files=files)
+                return await client.post(
+                    "/api/v1/resumes/upload",
+                    files=files,
+                    headers={"Authorization": "Bearer test-token"},
+                )
 
             async def do_probe():
                 t0 = time.perf_counter()
@@ -508,12 +516,15 @@ class TestLiveDatabaseAndFailureSimulation:
                 "headcount": 2,
             }
 
-            resp_post = await client.post("/api/v1/jobs", json=job_payload)
-            # If live DB is present, returns 200; if no live DB, error is DB connection not MissingGreenlet serialization
-            if resp_post.status_code == 200:
-                data = resp_post.json()
-                assert data["title"] == job_payload["title"]
-                assert data["skills"] == job_payload["skills"]
+            resp_post = await client.post(
+                "/api/v1/jobs",
+                json=job_payload,
+                headers={"Authorization": "Bearer test-token"},
+            )
+            assert resp_post.status_code == 200
+            data = resp_post.json()
+            assert data["title"] == job_payload["title"]
+            assert data["skills"] == job_payload["skills"]
 
             resp_get = await client.get("/api/v1/jobs")
             if resp_get.status_code == 200:

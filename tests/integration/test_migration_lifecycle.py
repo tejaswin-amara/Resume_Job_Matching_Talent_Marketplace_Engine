@@ -1,3 +1,5 @@
+import asyncio
+import os
 import subprocess
 
 import pytest
@@ -40,12 +42,14 @@ async def test_migration_lifecycle_upgrade_downgrade_reupgrade():
     with PostgresContainer("pgvector/pgvector:pg16") as postgres:
         # Override the database URL with the Testcontainers DB
         db_url = postgres.get_connection_url().replace("postgresql+psycopg2", "postgresql+asyncpg")
+        os.environ["DATABASE_URL"] = db_url
+        settings.database_url = db_url
 
         # 1. First Upgrade to Head
         alembic_cfg = Config("alembic.ini")
-        alembic_cfg.set_main_option("sqlalchemy.url", db_url.replace("+asyncpg", ""))
+        alembic_cfg.set_main_option("sqlalchemy.url", db_url)
 
-        command.upgrade(alembic_cfg, "head")
+        await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
 
         engine = create_async_engine(db_url, poolclass=NullPool)
 
@@ -66,7 +70,7 @@ async def test_migration_lifecycle_upgrade_downgrade_reupgrade():
             assert ext_res.scalar() == "vector"
 
         # 3. Downgrade to Base
-        command.downgrade(alembic_cfg, "base")
+        await asyncio.to_thread(command.downgrade, alembic_cfg, "base")
 
         async with engine.begin() as conn:
             result = await conn.execute(
@@ -77,7 +81,7 @@ async def test_migration_lifecycle_upgrade_downgrade_reupgrade():
             assert result.scalar() is False
 
         # 4. Re-Upgrade to Head
-        command.upgrade(alembic_cfg, "head")
+        await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
 
         async with engine.begin() as conn:
             result = await conn.execute(

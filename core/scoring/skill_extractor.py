@@ -36,6 +36,10 @@ class SkillExtractor:
                 "elasticsearch",
                 "kafka",
                 "rabbitmq",
+                "pytorch",
+                "tensorflow",
+                "nlp",
+                "sentencetransformers",
             ]
         self.skills = [s.lower() for s in skills]
         self.automaton = AhoCorasickAutomaton(ignore_case=True)

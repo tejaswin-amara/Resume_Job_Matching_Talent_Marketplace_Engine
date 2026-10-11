@@ -64,7 +64,12 @@ async def upload_resume(
         db.add(CandidateSkill(candidate_id=candidate.id, skill_id=skill.id))
 
     await db.commit()
-    return {"id": str(candidate.id), "skills": list(found_skills), "raw_text": text}
+    return {
+        "id": str(candidate.id),
+        "skills": list(found_skills),
+        "skills_extracted": list(found_skills),
+        "raw_text": text,
+    }
 
 
 class ParseTextRequest(BaseModel):

@@ -127,15 +127,15 @@ def assert_rfc7807_problem_details(
 
 def assert_flow_conservation(
     assignments: list[dict[str, Any]],
-    candidate_capacities: dict[int, int],
-    job_capacities: dict[int, int],
+    candidate_capacities: dict[Any, int],
+    job_capacities: dict[Any, int],
     total_flow: int | None = None,
 ) -> None:
     """Verifies network flow conservation and capacity constraints for talent marketplace allocation."""
     assert isinstance(assignments, list), f"Assignments must be a list, got {type(assignments)}"
 
-    cand_usage: dict[int, int] = {}
-    job_usage: dict[int, int] = {}
+    cand_usage: dict[str, int] = {}
+    job_usage: dict[str, int] = {}
 
     for assign in assignments:
         cid = assign.get("candidate_id")
@@ -143,21 +143,24 @@ def assert_flow_conservation(
         assert cid is not None, f"Assignment missing candidate_id: {assign}"
         assert jid is not None, f"Assignment missing job_id: {assign}"
 
-        cand_usage[cid] = cand_usage.get(cid, 0) + 1
-        job_usage[jid] = job_usage.get(jid, 0) + 1
+        cand_usage[str(cid)] = cand_usage.get(str(cid), 0) + 1
+        job_usage[str(jid)] = job_usage.get(str(jid), 0) + 1
+
+    cand_caps = {str(k): v for k, v in candidate_capacities.items()}
+    job_caps = {str(k): v for k, v in job_capacities.items()}
 
     # Candidate capacity constraints
-    for cid, usage in cand_usage.items():
-        cap = candidate_capacities.get(cid, 1)
+    for cid_str, usage in cand_usage.items():
+        cap = cand_caps.get(cid_str, 1)
         assert usage <= cap, (
-            f"Flow violation: Candidate {cid} assigned {usage} times, exceeding capacity {cap}"
+            f"Flow violation: Candidate {cid_str} assigned {usage} times, exceeding capacity {cap}"
         )
 
     # Job capacity constraints
-    for jid, usage in job_usage.items():
-        cap = job_capacities.get(jid, 1)
+    for jid_str, usage in job_usage.items():
+        cap = job_caps.get(jid_str, 1)
         assert usage <= cap, (
-            f"Flow violation: Job {jid} assigned {usage} times, exceeding capacity {cap}"
+            f"Flow violation: Job {jid_str} assigned {usage} times, exceeding capacity {cap}"
         )
 
     if total_flow is not None:
