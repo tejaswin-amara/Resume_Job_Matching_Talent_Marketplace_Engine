@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   db:
-    image: pgvector/pgvector:pg16
+    image: pgvector/pgvector:pg16-v0.8.0
     environment:
       POSTGRES_DB: talent_db
       POSTGRES_USER: admin
@@ -33,9 +33,9 @@ services:
       retries: 5
 
   web:
-    image: node:20-alpine
+    image: node:22-alpine
     working_dir: /app
-    command: npm run dev
+    command: pnpm run dev
     volumes:
       - ./web:/app
     ports:
