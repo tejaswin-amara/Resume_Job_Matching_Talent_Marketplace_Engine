@@ -83,8 +83,26 @@ async def run_async_migrations() -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
 
-    asyncio.run(run_async_migrations())
+    if loop and loop.is_running():
+        # If we are already inside a running event loop (e.g. pytest-asyncio)
+        # we can't use asyncio.run(). In this specific case, Alembic is being
+        # driven synchronously by the test runner calling command.upgrade(),
+        # so we have to run it in a separate thread, or handle it specially.
+        import threading
+
+        def run_in_thread():
+            asyncio.run(run_async_migrations())
+
+        thread = threading.Thread(target=run_in_thread)
+        thread.start()
+        thread.join()
+    else:
+        asyncio.run(run_async_migrations())
 
 
 if context.is_offline_mode():

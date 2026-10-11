@@ -64,13 +64,13 @@ rules:
     patterns:
       - pattern-either:
           - pattern: import collections
-          - pattern: from collections import ...
+          - pattern: from collections import $ANY
           - pattern: import heapq
-          - pattern: from heapq import ...
+          - pattern: from heapq import $ANY
           - pattern: import bisect
-          - pattern: from bisect import ...
+          - pattern: from bisect import $ANY
           - pattern: import networkx
-          - pattern: from networkx import ...
+          - pattern: from networkx import $ANY
     message: "Violates cardinal constraint: standard collection and algorithm libraries are forbidden inside core/engine/."
     languages: [python]
     severity: ERROR
