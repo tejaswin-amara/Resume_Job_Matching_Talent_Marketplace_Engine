@@ -71,11 +71,13 @@ class BitmaskTSP:
         curr_node = last_node
 
         while curr_node != -1 and curr_mask > 0:
-            path.append(curr_node)
+            if curr_node != start_node:
+                path.append(curr_node)
             prev_node = parent[curr_mask][curr_node]
             curr_mask ^= 1 << curr_node
             curr_node = prev_node
 
+        path.append(start_node)
         path.reverse()
         return (best_cost, path)
 

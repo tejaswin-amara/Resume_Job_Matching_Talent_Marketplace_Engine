@@ -25,7 +25,7 @@ def setup_telemetry(app: Any = None) -> bool:
         otlp_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
         if otlp_endpoint:
             try:
-                from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+                from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (  # type: ignore
                     OTLPSpanExporter,
                 )
 

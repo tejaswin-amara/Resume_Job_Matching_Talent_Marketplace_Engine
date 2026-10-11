@@ -3,6 +3,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    @field_validator("cors_origins", mode="after")
+    @classmethod
+    def validate_cors_origins(cls, v: list[str]) -> list[str]:
+        if "*" in v:
+            raise ValueError(
+                "Wildcard CORS origin '*' is not allowed when credentials are enabled."
+            )
+        return v
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     app_name: str = "Talent Marketplace API"

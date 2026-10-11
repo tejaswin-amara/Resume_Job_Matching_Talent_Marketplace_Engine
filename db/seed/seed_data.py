@@ -2,8 +2,7 @@ import asyncio
 
 from core.engine.string.aho_corasick import AhoCorasickAutomaton
 from db.models import Candidate, CandidateSkill, JobPosting, JobSkillRequirement, Skill
-from db.models.base import Base
-from db.session import async_session_maker, engine
+from db.session import get_sessionmaker
 
 SKILLS = [
     "python",
@@ -55,6 +54,48 @@ JOBS = [
         "min_exp": 4.0,
         "skills": ["aws", "docker", "kubernetes"],
     },
+    {
+        "title": "Data Engineer",
+        "desc": "Experience in Python, SQL, PostgreSQL and building data pipelines.",
+        "min_exp": 3.0,
+        "skills": ["python", "sql", "postgresql"],
+    },
+    {
+        "title": "Full Stack Engineer",
+        "desc": "React, Node.js, TypeScript, PostgreSQL",
+        "min_exp": 4.0,
+        "skills": ["react", "node.js", "typescript", "postgresql"],
+    },
+    {
+        "title": "Machine Learning Engineer",
+        "desc": "Python, AWS, PyTorch (using python proxy).",
+        "min_exp": 3.0,
+        "skills": ["python", "aws"],
+    },
+    {
+        "title": "Cloud Architect",
+        "desc": "AWS, GCP, Kubernetes, Docker",
+        "min_exp": 8.0,
+        "skills": ["aws", "gcp", "kubernetes", "docker"],
+    },
+    {
+        "title": "Backend Go Developer",
+        "desc": "Go, PostgreSQL, Docker, Kubernetes.",
+        "min_exp": 4.0,
+        "skills": ["go", "postgresql", "docker", "kubernetes"],
+    },
+    {
+        "title": "Frontend Vue Developer",
+        "desc": "Vue, JavaScript, HTML, CSS",
+        "min_exp": 2.0,
+        "skills": ["vue", "javascript"],
+    },
+    {
+        "title": "Security Engineer",
+        "desc": "Python, AWS, Linux, Security.",
+        "min_exp": 5.0,
+        "skills": ["python", "aws"],
+    },
 ]
 
 CANDIDATES = [
@@ -76,15 +117,84 @@ CANDIDATES = [
         "text": "DevOps guy. 5 years of AWS, Docker, Kubernetes, and some Python.",
         "exp": 5.0,
     },
+    {
+        "name": "David Clark",
+        "email": "david@example.com",
+        "text": "Data Engineer. 4 years of Python, SQL, and PostgreSQL.",
+        "exp": 4.0,
+    },
+    {
+        "name": "Eve Davis",
+        "email": "eve@example.com",
+        "text": "Full stack dev with React, Node.js, TypeScript and PostgreSQL. 5 years exp.",
+        "exp": 5.0,
+    },
+    {
+        "name": "Frank Evans",
+        "email": "frank@example.com",
+        "text": "ML Engineer. Python, AWS, and PyTorch. 3 years.",
+        "exp": 3.0,
+    },
+    {
+        "name": "Grace Hall",
+        "email": "grace@example.com",
+        "text": "Cloud Architect with 9 years in AWS, GCP, Docker, and Kubernetes.",
+        "exp": 9.0,
+    },
+    {
+        "name": "Harry Iles",
+        "email": "harry@example.com",
+        "text": "Go backend developer. 4 years Go, PostgreSQL, Docker.",
+        "exp": 4.0,
+    },
+    {
+        "name": "Ivy Johnson",
+        "email": "ivy@example.com",
+        "text": "Vue dev. 2 years Vue, JavaScript.",
+        "exp": 2.0,
+    },
+    {
+        "name": "Jack King",
+        "email": "jack@example.com",
+        "text": "Security engineer. 5 years Python, AWS.",
+        "exp": 5.0,
+    },
+    {
+        "name": "Kelly Lewis",
+        "email": "kelly@example.com",
+        "text": "React Native dev. 3 years React, JavaScript.",
+        "exp": 3.0,
+    },
+    {
+        "name": "Leo Martin",
+        "email": "leo@example.com",
+        "text": "Senior DevOps. 7 years AWS, Kubernetes.",
+        "exp": 7.0,
+    },
+    {
+        "name": "Mia Nelson",
+        "email": "mia@example.com",
+        "text": "Backend Python. 2 years Python, Django.",
+        "exp": 2.0,
+    },
+    {
+        "name": "Noah Owens",
+        "email": "noah@example.com",
+        "text": "Frontend TypeScript. 4 years TypeScript, React.",
+        "exp": 4.0,
+    },
+    {
+        "name": "Olivia Parker",
+        "email": "olivia@example.com",
+        "text": "Full stack. 6 years Python, React, PostgreSQL.",
+        "exp": 6.0,
+    },
 ]
 
 
 async def seed():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
 
-    async with async_session_maker() as session:
+    async with get_sessionmaker() as session:
         # Create skills
         skill_objs = {}
         for s in SKILLS:

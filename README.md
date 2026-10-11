@@ -112,7 +112,7 @@ pnpm dev
 | `POST` | `/api/v1/resumes/upload` | Upload & parse resume file (PDF, DOCX, TXT) | `CandidateResponse` (200) |
 | `POST` | `/api/v1/resumes/parse-text` | Parse raw unstructured resume text | `CandidateResponse` (200) |
 | `POST` | `/api/v1/match/adhoc` | Run ad-hoc 4-signal hybrid ATS match | `MatchResultResponse` (200) |
-| `POST` | `/api/v1/marketplace/allocate` | Run Dinic's capacity-constrained allocation | `MarketplaceAllocation` (200) |
+| `POST` | `/api/v1/marketplace/allocate` | Run Dinic's capacity-constrained allocation (Maximum Cardinality) | `MarketplaceAllocation` (200) |
 | `GET` | `/api/v1/marketplace/bottlenecks` | Identify candidate/job bottleneck cuts | `BottleneckResponse` (200) |
 | `POST` | `/api/v1/marketplace/team-builder`| Greedy set-cover minimum cost team | `TeamBuilderResponse` (200) |
 

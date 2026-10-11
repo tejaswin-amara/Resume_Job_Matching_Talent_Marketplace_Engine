@@ -23,9 +23,6 @@ def upgrade() -> None:
     op.execute("CREATE EXTENSION IF NOT EXISTS vector;")
 
     # 2. Skills table
-    op.create_index(
-        op.f("ix_job_postings_created_at"), "job_postings", ["created_at"], unique=False
-    )
     op.create_table(
         "skills",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
@@ -46,7 +43,6 @@ def upgrade() -> None:
         sa.Column("embedding", pgvector.sqlalchemy.Vector(384), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, index=True),
     )
-
     # 4. CandidateSkills table
     op.create_table(
         "candidate_skills",
@@ -66,7 +62,6 @@ def upgrade() -> None:
     )
 
     # 5. JobPostings table
-    op.create_index(op.f("ix_candidates_created_at"), "candidates", ["created_at"], unique=False)
     op.create_table(
         "job_postings",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
@@ -81,7 +76,6 @@ def upgrade() -> None:
         sa.Column("embedding", pgvector.sqlalchemy.Vector(384), nullable=True),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False, index=True),
     )
-
     # 6. JobSkillRequirements table
     op.create_table(
         "job_skill_requirements",
