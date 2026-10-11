@@ -64,3 +64,6 @@ htmlcov/
 # Scratch & Temporary
 scratch/
 .tempmediaStorage/
+test-results/
+playwright-report/
+

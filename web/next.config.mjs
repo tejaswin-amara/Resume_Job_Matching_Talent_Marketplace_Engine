@@ -1,15 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   async rewrites() {
-    if (process.env.BACKEND_URL) {
-      return [
-        {
-          source: '/api/:path*',
-          destination: `${process.env.BACKEND_URL}/api/:path*`,
-        },
-      ];
-    }
-    return [];
+    const backendUrl = process.env.BACKEND_URL || 'http://127.0.0.1:8000';
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${backendUrl}/api/:path*`,
+      },
+    ];
   },
 };
 
