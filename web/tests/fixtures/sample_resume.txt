@@ -1,0 +1,22 @@
+Alex Mercer
+alex.mercer@cloudcorp.io | +1 415-555-0192 | San Francisco, CA
+https://linkedin.com/in/alexmercer | https://github.com/alexmercer
+
+Professional Summary
+Lead Machine Learning Engineer with 6 years experience in NLP and pgvector search.
+
+Work Experience
+Lead Machine Learning Engineer | AI Labs
+2021 - Present
+- Developed PyTorch transformers and pgvector search engine.
+
+Machine Learning Researcher | DataWorks
+2019 - 2021
+- Researched NLP and SentenceTransformers embeddings.
+
+Education
+Master of Science in Artificial Intelligence
+MIT, 2019
+
+Skills
+Python, PyTorch, NLP, Machine Learning, pgvector, SentenceTransformers, Docker

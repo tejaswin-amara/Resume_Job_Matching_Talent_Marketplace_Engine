@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { calculateHybridATSScore, extractSkillsFromText, ServerJob } from "@/lib/server-engine";
+import { calculateHybridATSScore, extractSkillsFromText, parseFullResume, ServerJob } from "@/lib/server-engine";
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,7 +26,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const candSkills = extractSkillsFromText(resume_text || "");
+    const parsedCand = parseFullResume(resume_text || "");
+    const candSkills = parsedCand.skills;
     const jobSkills = extractSkillsFromText(job_description || "");
 
     const virtualJob: ServerJob = {
@@ -43,8 +44,8 @@ export async function POST(req: NextRequest) {
     const matchResult = calculateHybridATSScore(
       resume_text || "",
       candSkills,
-      4.0,
-      3,
+      parsedCand.years_experience,
+      parsedCand.education_level,
       virtualJob
     );
 

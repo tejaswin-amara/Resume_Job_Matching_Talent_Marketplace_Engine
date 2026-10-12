@@ -12,7 +12,7 @@ import {
 } from "@/components/reactbits";
 import { ScoreBreakdown } from "@/components/score-breakdown";
 import { api, ParsedResume, Job, MatchScore } from "@/lib/api";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Mail, Phone, MapPin, Briefcase, GraduationCap, User } from "lucide-react";
 
 export default function CandidatePortal() {
   const [uploading, setUploading] = useState(false);
@@ -59,16 +59,8 @@ export default function CandidatePortal() {
     setUploading(true);
     try {
       const res = await api.uploadResume(file);
-      if (res.text) {
-        const parsed = await api.parseText(res.text);
-        setResumeData(parsed);
-      } else {
-        setResumeData({
-          skills: res.skills || res.parsed_skills || res.skills_extracted || [],
-          raw_text: res.raw_text || "",
-        });
-        setRawResumeText(res.raw_text || "");
-      }
+      setResumeData(res);
+      setRawResumeText(res.raw_text || "");
     } catch (error: any) {
       console.error("Upload failed", error);
       alert(error?.message || "Upload failed. Please check the file format.");
@@ -116,27 +108,112 @@ export default function CandidatePortal() {
         {resumeData && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-1 space-y-6">
-              <SpotlightCard className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold text-gray-100">Your Profile</h2>
+              <SpotlightCard className="p-6 space-y-5">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-100 flex items-center gap-2">
+                      <User className="w-5 h-5 text-blue-400" />
+                      {resumeData.name || "Candidate Profile"}
+                    </h2>
+                    <span className="inline-block mt-1 text-xs px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-300 font-medium border border-blue-500/20">
+                      {resumeData.years_experience ?? 0} yrs experience
+                    </span>
+                  </div>
                   <StarBorder onClick={() => setResumeData(null)} className="text-xs">
                     Re-upload
                   </StarBorder>
                 </div>
-                <div className="mb-4">
-                  <h4 className="text-sm font-semibold text-gray-400 mb-2">Skills Extracted</h4>
-                  <div className="flex flex-wrap gap-2">
+
+                {/* Contact Information */}
+                {(resumeData.email || resumeData.phone || resumeData.location) && (
+                  <div className="space-y-1.5 pt-1 border-t border-gray-800/80 text-xs text-gray-300">
+                    {resumeData.email && (
+                      <div className="flex items-center gap-2 text-gray-300">
+                        <Mail className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                        <span className="truncate">{resumeData.email}</span>
+                      </div>
+                    )}
+                    {resumeData.phone && (
+                      <div className="flex items-center gap-2 text-gray-300">
+                        <Phone className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span>{resumeData.phone}</span>
+                      </div>
+                    )}
+                    {resumeData.location && (
+                      <div className="flex items-center gap-2 text-gray-300">
+                        <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <span>{resumeData.location}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Skills Extracted */}
+                <div className="pt-2 border-t border-gray-800/80">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <h4 className="text-sm font-semibold text-gray-300">Skills Extracted</h4>
+                    <span className="text-xs text-gray-500 font-mono">({resumeData.skills.length})</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-1">
                     {resumeData.skills.map((s, i) => (
-                      <AnimatedBadge key={i} variant="outline">
+                      <AnimatedBadge key={i} variant="outline" className="text-xs">
                         {s}
                       </AnimatedBadge>
                     ))}
                   </div>
                 </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-400 mb-2">Experience</h4>
-                  <p className="text-sm text-gray-300">0 roles found</p>
+
+                {/* Experience / Roles */}
+                <div className="pt-2 border-t border-gray-800/80">
+                  <div className="flex items-center justify-between mb-2.5">
+                    <h4 className="text-sm font-semibold text-gray-300 flex items-center gap-1.5">
+                      <Briefcase className="w-4 h-4 text-blue-400" />
+                      Work Experience
+                    </h4>
+                    <span className="text-xs text-gray-400">
+                      {resumeData.roles?.length || 0} {resumeData.roles?.length === 1 ? "role" : "roles"}
+                    </span>
+                  </div>
+                  {resumeData.roles && resumeData.roles.length > 0 ? (
+                    <div className="space-y-2.5">
+                      {resumeData.roles.map((role, idx) => (
+                        <div key={idx} className="p-3 rounded-lg bg-gray-900/60 border border-gray-800/80 text-xs space-y-1">
+                          <div className="font-semibold text-gray-200 flex items-start justify-between gap-2">
+                            <span>{role.title}</span>
+                            <span className="text-gray-400 text-[11px] font-normal whitespace-nowrap">{role.duration}</span>
+                          </div>
+                          {role.company && <div className="text-gray-400 text-[11px]">{role.company}</div>}
+                          {role.description && <div className="text-gray-400 text-[11px] leading-relaxed">{role.description}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-400">General software engineering background.</p>
+                  )}
                 </div>
+
+                {/* Education */}
+                {resumeData.education && resumeData.education.length > 0 && (
+                  <div className="pt-2 border-t border-gray-800/80">
+                    <h4 className="text-sm font-semibold text-gray-300 mb-2.5 flex items-center gap-1.5">
+                      <GraduationCap className="w-4 h-4 text-purple-400" />
+                      Education
+                    </h4>
+                    <div className="space-y-2">
+                      {resumeData.education.map((edu, idx) => (
+                        <div key={idx} className="p-2.5 rounded-lg bg-gray-900/60 border border-gray-800/80 text-xs">
+                          <div className="font-medium text-gray-200">
+                            {edu.degree}{edu.field ? ` in ${edu.field}` : ''}
+                          </div>
+                          <div className="text-gray-400 text-[11px] flex justify-between mt-0.5">
+                            <span>{edu.institution || 'University'}</span>
+                            {edu.year && <span>{edu.year}</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </SpotlightCard>
             </div>
 

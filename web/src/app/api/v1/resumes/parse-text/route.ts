@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { extractSkillsFromText } from "@/lib/server-engine";
+import { parseFullResume } from "@/lib/server-engine";
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,12 +24,9 @@ export async function POST(req: NextRequest) {
     }
 
     const { text } = await req.json();
-    const skills = extractSkillsFromText(text || "");
+    const parsed = parseFullResume(text || "");
 
-    return NextResponse.json({
-      skills,
-      raw_text: text || "",
-    });
+    return NextResponse.json(parsed);
   } catch (error: any) {
     return NextResponse.json({ detail: error?.message || "Parsing failed" }, { status: 500 });
   }

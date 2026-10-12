@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { extractSkillsFromText } from "@/lib/server-engine";
+import { parseFullResume } from "@/lib/server-engine";
 
 export async function POST(req: NextRequest) {
   try {
@@ -43,17 +43,10 @@ export async function POST(req: NextRequest) {
       text = `${file.name} candidate resume with software engineering and systems skills.`;
     }
 
-    const skills = extractSkillsFromText(text);
+    const parsedProfile = parseFullResume(text, file.name);
 
     return NextResponse.json({
-      id: "cand_" + Math.random().toString(36).substring(2, 9),
-      filename: file.name,
-      skills: skills,
-      parsed_skills: skills,
-      skills_extracted: skills,
-      raw_text: text,
-      years_experience: 5.0,
-      education_level: 3,
+      ...parsedProfile,
       embedding_id: "vec_384_001",
     });
   } catch (error: any) {

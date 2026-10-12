@@ -13,8 +13,37 @@ export interface Job {
   skills: string[];
 }
 
+export interface ExtractedRole {
+  title: string;
+  company?: string;
+  duration?: string;
+  description?: string;
+}
+
+export interface ExtractedEducation {
+  degree: string;
+  field?: string;
+  institution?: string;
+  year?: string;
+  level: number;
+}
+
 export interface ParsedResume {
+  id?: string;
+  filename?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  location?: string;
+  linkedin?: string;
+  github?: string;
   skills: string[];
+  parsed_skills?: string[];
+  skills_extracted?: string[];
+  years_experience?: number;
+  education_level?: number;
+  education?: ExtractedEducation[];
+  roles?: ExtractedRole[];
   raw_text?: string;
 }
 
@@ -36,7 +65,7 @@ const AUTH_HEADERS = {
 };
 
 export const api = {
-  uploadResume: async (file: File): Promise<any> => {
+  uploadResume: async (file: File): Promise<ParsedResume> => {
     const formData = new FormData();
     formData.append('file', file);
     const res = await fetch(`${API_BASE}/resumes/upload`, {
@@ -53,7 +82,11 @@ export const api = {
     const data = await res.json();
     return {
       ...data,
+      name: data.name || "Candidate Profile",
       skills: data.skills || data.parsed_skills || data.skills_extracted || [],
+      years_experience: data.years_experience ?? 0,
+      education: data.education || [],
+      roles: data.roles || [],
     };
   },
   parseText: async (text: string): Promise<ParsedResume> => {
@@ -69,7 +102,11 @@ export const api = {
     const data = await res.json();
     return {
       ...data,
+      name: data.name || "Candidate Profile",
       skills: data.skills || data.parsed_skills || data.skills_extracted || [],
+      years_experience: data.years_experience ?? 0,
+      education: data.education || [],
+      roles: data.roles || [],
     };
   },
   createJob: async (job: Omit<Job, 'id'>): Promise<Job> => {
