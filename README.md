@@ -1,6 +1,7 @@
 # Talent Marketplace & Resume Matching Engine
 
 [![CI Pipeline](https://github.com/tejaswin-amara/Resume_Job_Matching_Talent_Marketplace_Engine/actions/workflows/ci.yml/badge.svg)](https://github.com/tejaswin-amara/Resume_Job_Matching_Talent_Marketplace_Engine/actions)
+[![Live Website](https://img.shields.io/badge/Vercel-Live%20Website-success?logo=vercel)](https://web-blond-alpha-o8dah7izh0.vercel.app)
 [![GitHub Pages](https://img.shields.io/badge/GitHub%20Pages-DSA--3%20Concepts%20Showcase-indigo.svg)](https://tejaswin-amara.github.io/Resume_Job_Matching_Talent_Marketplace_Engine/)
 [![Test Suite](https://img.shields.io/badge/tests-245%20passed-brightgreen.svg)](tests/)
 [![Frontend Tests](https://img.shields.io/badge/vitest-9%20passed-brightgreen.svg)](web/tests/)
@@ -8,6 +9,9 @@
 [![Next.js 14](https://img.shields.io/badge/next.js-14.2-black.svg)](web/)
 [![UI: React Bits](https://img.shields.io/badge/UI-React%20Bits-61dafb.svg)](https://reactbits.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+> 🚀 **Live Production Website**: [web-blond-alpha-o8dah7izh0.vercel.app](https://web-blond-alpha-o8dah7izh0.vercel.app)
+> 📚 **Interactive DSA-3 Concepts GitHub Page**: [tejaswin-amara.github.io/Resume_Job_Matching_Talent_Marketplace_Engine](https://tejaswin-amara.github.io/Resume_Job_Matching_Talent_Marketplace_Engine/)
 
 A high-throughput, enterprise-grade talent marketplace and automated candidate matching engine. Combines a zero-external-dependency algorithmic core (**DSA-3 Modules M1–M6**) with hybrid semantic vector search, PostgreSQL/pgvector persistence, and an interactive Next.js 14 frontend powered exclusively by [React Bits](https://reactbits.dev/).
 
